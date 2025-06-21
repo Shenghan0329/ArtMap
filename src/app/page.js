@@ -30,6 +30,17 @@ export default function Home() {
           "use server"
           console.log("Close")
         }} />
+        {/* Image */}
+        <div className="relative aspect-square w-full md:w-48 lg:w-48 bg-gray-100">
+          <Image
+            className="dark:invert"
+            src="/sample-img.jpg"
+            alt="Sample Image"
+            layout="fill"
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+        </div>
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{" "}
