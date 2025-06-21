@@ -11,7 +11,7 @@ const ZoomButtons = ({
 }) => {
   
   return (
-    <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+    <div className="fixed bottom-4 right-4 flex flex-col gap-2">
       <button
         onClick={handleZoomIn}
         disabled={disableZoomIn}

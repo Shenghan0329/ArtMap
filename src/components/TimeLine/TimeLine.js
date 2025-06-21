@@ -3,13 +3,11 @@
 import TimeLineSlider from "./TimeLineSlider";
 import { useState } from "react";
 
-const TimeLine = () => {
-    const [time, setTime] = useState('');
+const TimeLine = ({time, setTime}) => {
 
-    return (<>
-        <h2>Time: {time}</h2>
+    return (<div className="h-5 w-9/10 flex justify-center items-center">
         <TimeLineSlider time={time} setTime={setTime} />
-    </>)
+    </div>)
 }
 
 export default TimeLine;
