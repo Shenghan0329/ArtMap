@@ -1,5 +1,7 @@
 import Image from "next/image";
 import TimeLineSlider from "@/components/TimeLine/TimeLine";
+import ZoomButtons from "@/components/Buttons/ZoomButtons/ZoomButtons";
+import CloseButton from "@/components/Buttons/CloseButton/CloseButton";
 
 export default function Home() {
   return (
@@ -14,6 +16,20 @@ export default function Home() {
           priority
         />
         <TimeLineSlider />
+        <ZoomButtons 
+          handleZoomIn={async () => {
+            "use server"
+            console.log("Zoom In")
+          }}
+          handleZoomOut={async () => {
+            "use server"
+            console.log("Zoom Out")
+          }}
+        />
+        <CloseButton onClick={async () => {
+          "use server"
+          console.log("Close")
+        }} />
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{" "}
