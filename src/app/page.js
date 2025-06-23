@@ -29,6 +29,7 @@ export default function Home() {
           onClick={async () => {
             "use client"
             setVisible(true);
+            console.log(process.env.GOOGLE_MAP_API_KEY);
           }}
         >Open Left Panel</button>
         <LeftPanel visible={visible} setVisible={setVisible}>
