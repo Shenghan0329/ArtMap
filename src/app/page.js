@@ -5,30 +5,44 @@ import ZoomButtons from "@/components/Buttons/ZoomButtons/ZoomButtons";
 import CloseButton from "@/components/Buttons/CloseButton/CloseButton";
 import SwitchButton from "@/components/Buttons/SwitchButton/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
+import GoogleMapSelector from "@/components/2DMap/2DMap";
 import { useState } from "react";
 
 export default function Home() {
   const [visible, setVisible] = useState(false);
   const [time, setTime] = useState(2025);
+  const [map, setMap] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState({});
+
+  const handleZoomIn = () => {
+    console.log(map);
+    if (map) {
+      map.setZoom(map.getZoom() + 1);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      map.setZoom(map.getZoom() - 1);
+    }
+  };
+
   return (
-    <div className="p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
         <ZoomButtons 
-          handleZoomIn={async () => {
-            console.log("Zoom In")
-          }}
-          handleZoomOut={async () => {
-            console.log("Zoom Out")
-          }}
+          handleZoomIn={handleZoomIn}
+          handleZoomOut={handleZoomOut}
         />
 
         <SwitchButton onClick={async () => {
           console.log("Switch")
         }} />
         <button 
-          className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5"
+          className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5"
           onClick={async () => {
             "use client"
             setVisible(true);
+            console.log(process.env.GOOGLE_MAP_API_KEY);
           }}
         >Open Left Panel</button>
         <LeftPanel visible={visible} setVisible={setVisible}>
@@ -57,6 +71,12 @@ export default function Home() {
             })}
           </div>
         </LeftPanel>
+        <GoogleMapSelector 
+          map={map} 
+          setMap={setMap}
+          selectedPlace={selectedPlace}
+          setSelectedPlace={setSelectedPlace}
+        />
     </div>
   );
 }
