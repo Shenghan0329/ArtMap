@@ -85,7 +85,7 @@ const GoogleMapSelector = ({map, setMap, selectedPlace, setSelectedPlace}) => {
         <div className="flex flex-col lg:flex-row w-full h-full">
           {/* Map Container */}
           <div className="relative flex-1">
-            <div ref={mapRef} className="w-full h-full" />
+            <div ref={mapRef} className="w-full h-full " />
             
             {/* Map Instructions */}
             <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-3 text-sm text-gray-700 max-w-xs">
