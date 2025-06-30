@@ -1,6 +1,6 @@
 'use client'
 
-import CloseButton from "../Buttons/CloseButton/CloseButton";
+import CloseButton from "../Buttons/CloseButton";
 
 const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', children }) => {
     return (
