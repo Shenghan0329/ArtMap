@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 
 import Image from "next/image";
+import TimeLine from "@/components/TimeLine/TimeLine";
+import CloseButton from "@/components/Buttons/CloseButton/CloseButton";
 
 const SmallMapPanel = () => {
     return (<>
-
         <div className="flex flex-row flex-wrap gap-2">
             {[0,0,0,0,0,0,0,0].map((item, index) => {
                 return (

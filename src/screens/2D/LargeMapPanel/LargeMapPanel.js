@@ -9,10 +9,6 @@ const LargeMapPanel = () => {
     return (<>
         <div className="flex flex-row">
             <TimeLine time={time} setTime={setTime}/>
-            <CloseButton onClick={async () => {
-                "use client"
-                setVisible(false);
-            }} />
         </div>
         <div className="mb-2">Year: {time}</div>
         <div className="flex flex-row flex-wrap gap-2">

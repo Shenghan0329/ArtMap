@@ -1,5 +1,7 @@
 'use client'
 
+import CloseButton from "../Buttons/CloseButton/CloseButton";
+
 const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', children }) => {
     return (
         <div
@@ -11,6 +13,12 @@ const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', children }) => {
         {/* Panel content */}
         <div className={`p-6 pt-10 pb-10 h-full overflow-y-auto`}>
             {children}
+            <div className="top-2 right-2 absolute">
+                <CloseButton onClick={async () => {
+                    "use client"
+                    setVisible(false);
+                }} />
+            </div>
         </div>
         </div>
     );
