@@ -19,12 +19,13 @@ const ZoomButtons = ({
       >
         +
       </button>
+
       <button
         onClick={handleZoomOut}
         disabled={disableZoomOut}
         className="w-10 h-10 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-semibold text-lg transition-colors"
       >
-        −
+        -
       </button>
     </div>
   );
