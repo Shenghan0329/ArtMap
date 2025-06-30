@@ -3,8 +3,8 @@
 import SmallMapPanel from "./SmallMapPanel/SmallMapPanel";  
 import LargeMapPanel from "./LargeMapPanel/LargeMapPanel";
 
-import ZoomButtons from "@/components/Buttons/ZoomButtons/ZoomButtons";
-import SwitchButton from "@/components/Buttons/SwitchButton/SwitchButton";
+import ZoomButtons from "@/components/Buttons/ZoomButtons";
+import SwitchButton from "@/components/Buttons/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
 import { useState, useEffect, use } from "react";
