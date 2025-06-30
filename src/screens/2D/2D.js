@@ -7,8 +7,8 @@ import ZoomButtons from "@/components/Buttons/ZoomButtons";
 import SwitchButton from "@/components/Buttons/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
-import { useState, useEffect, use } from "react";
-import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { useState, useEffect, useMemo } from "react";
+import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
 
 const TwoDimensionalMap = () => {
     const map = useMap();
@@ -17,24 +17,71 @@ const TwoDimensionalMap = () => {
     const [visible, setVisible] = useState(false);
     const [isSmall, setIsSmall] = useState(false);
 
+    const [canPin, setCanPin] = useState(false);
+    const [toPin, setToPin] = useState([]);
+    const [pinned, setPinned] = useState([]);
+    const [panelObject, setPanelObject] = useState({});
+
     const handleZoomIn = () => {
-        map.setZoom(map.getZoom() + 1);
+        if(map) map.setZoom(map.getZoom() + 1);
     };
 
     const handleZoomOut = () => {
-        map.setZoom(map.getZoom() - 1);
+        if(map) map.setZoom(map.getZoom() - 1);
     };
 
-    const getRadius = () => {
-        const bounds = map.getBounds();
-        const {Kh, ki} = bounds;
-        const khl = Kh.lo;
-        const khh = Kh.hi;
-        const kil = ki.lo; 
-        const kih = ki.hi;
-        const radius = Math.max(khh-khl, kih-kil) * 111000;
-        return radius;
+    const queryToPlaces = async (res, status, pagination, maxResults = 40) => {
+        if (maxResults <= pinned.length || status !== 'OK') {
+            return;
+        }
+        setToPin(prev => [...prev, ...res]);
+        if (pagination.hasNextPage) {
+            pagination.nextPage();
+        } else {
+            setCanPin(true);
+        }
     }
+
+    const markers = useMemo(() => {
+        const Keys = {}
+        const getKey = (address) => {
+            let key = address.replace(/[^0-9A-Za-z]/, '-')
+            if (Keys[key]) {
+                key = key + '-' + Keys[key];
+                Keys[address] += 1;
+            } else {
+                Keys[key] = 2;
+            }
+            return key;
+        }
+        return (
+            pinned.map((place, index) => {
+                return(
+                <AdvancedMarker 
+                    position={place.geometry.location} 
+                    key={getKey(place.formatted_address)}
+                    onClick={() => {
+                        setPanelObject(place);
+                        setVisible(true);
+                    }}
+                >
+                    <Pin
+                        background={'#0f9d58'}
+                        borderColor={'#006425'}
+                        glyphColor={'#60d98f'}
+                        
+                    />
+                </AdvancedMarker>
+                )
+            }) 
+        )
+    }, [pinned]);
+
+    useEffect(() => {
+        if (canPin){
+            setPinned(toPin);
+        }
+    }, [canPin]);
 
     useEffect(() => {
         if (!placesLib || !map) return;
@@ -71,15 +118,17 @@ const TwoDimensionalMap = () => {
         });
         
         map.addListener('zoom_changed', () => {
-            const zoom = map.getZoom();
             const svc = new placesLib.PlacesService(map);
-            svc.nearbySearch({
-                "type": 'locality',
-                "radius": getRadius(),
-                "location": map.getCenter()
+            const bounds = map.getBounds();
+            setCanPin(false)
+            setToPin([]);
+            svc.textSearch({
+                'bounds': bounds,
+                'type': 'locality',
+                'query': 'city',
             }, (res, status, pagination) => {
-                console.log(res, status, pagination);
-            })
+                queryToPlaces(res, status, pagination);
+            });
         });
         
     }, [map, placesLib]);
@@ -96,15 +145,16 @@ const TwoDimensionalMap = () => {
             }} />
             <button 
                 className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5"
-                onClick={async () => {
-                    "use client"
+                onClick={() => {
                     setVisible(true);
                 }}
             >Open Left Panel</button>
             <LeftPanel visible={visible} setVisible={setVisible}>
-                {isSmall ? <SmallMapPanel /> : <LargeMapPanel />}
+                {isSmall ? <SmallMapPanel /> : <LargeMapPanel place={panelObject} />}
             </LeftPanel>
-            <GoogleMapSelector />
+            <GoogleMapSelector>
+                {markers}
+            </GoogleMapSelector>
         </div>
     );
 }
