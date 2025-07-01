@@ -9,13 +9,18 @@ import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
 import { useState, useEffect, useMemo } from "react";
 import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
+import { largeMapQuery, smallMapQuery } from "@/queries/google_map_queries";
 
 const TwoDimensionalMap = () => {
     const map = useMap();
     const placesLib = useMapsLibrary('places');
     const [locationInit, setLocationInit] = useState(false);
     const [visible, setVisible] = useState(false);
+
+    const [zoom, setZoom] = useState(13);
     const [isSmall, setIsSmall] = useState(false);
+    const [queryText, setQueryText] = useState(smallMapQuery);
+    const [loadingEnabled, setLoadingEnabled] = useState(false);
 
     const [canPin, setCanPin] = useState(false);
     const [toPin, setToPin] = useState([]);
@@ -35,6 +40,7 @@ const TwoDimensionalMap = () => {
             return;
         }
         setToPin(prev => [...prev, ...res]);
+        console.log(res);
         if (pagination.hasNextPage) {
             pagination.nextPage();
         } else {
@@ -44,8 +50,11 @@ const TwoDimensionalMap = () => {
 
     const markers = useMemo(() => {
         const Keys = {}
-        const getKey = (address) => {
-            let key = address.replace(/[^0-9A-Za-z]/, '-')
+        const getKey = (address, index) => {
+            let key = address?.replace(/[^0-9A-Za-z]/, '-')
+            if (!address) {
+                key = index;
+            }
             if (Keys[key]) {
                 key = key + '-' + Keys[key];
                 Keys[address] += 1;
@@ -59,7 +68,7 @@ const TwoDimensionalMap = () => {
                 return(
                 <AdvancedMarker 
                     position={place.geometry.location} 
-                    key={getKey(place.formatted_address)}
+                    key={getKey(place.formatted_address, index)}
                     onClick={() => {
                         setPanelObject(place);
                         setVisible(true);
@@ -76,6 +85,23 @@ const TwoDimensionalMap = () => {
             }) 
         )
     }, [pinned]);
+
+    useEffect(() => {
+        setLoadingEnabled(true);
+        if (zoom < 12) {
+            setIsSmall(false);
+        } else {
+            setIsSmall(true);
+        }
+    }, [zoom]);
+
+    useEffect(() => {
+        if (isSmall) {
+            setQueryText(smallMapQuery);
+        } else {
+            setQueryText(largeMapQuery);
+        }
+    }, [isSmall]);
 
     useEffect(() => {
         if (canPin){
@@ -110,25 +136,9 @@ const TwoDimensionalMap = () => {
         // Set Listeners
         map.addListener('zoom_changed', () => {
             const zoom = map.getZoom();
-            if (zoom < 12) {
-                setIsSmall(false);
-            } else {
-                setIsSmall(true);
-            }
-        });
-        
-        map.addListener('zoom_changed', () => {
-            const svc = new placesLib.PlacesService(map);
-            const bounds = map.getBounds();
-            setCanPin(false)
-            setToPin([]);
-            svc.textSearch({
-                'bounds': bounds,
-                'type': 'locality',
-                'query': 'city',
-            }, (res, status, pagination) => {
-                queryToPlaces(res, status, pagination);
-            });
+            setZoom(prevZoom => {
+                return zoom;
+            })
         });
         
     }, [map, placesLib]);
@@ -144,13 +154,27 @@ const TwoDimensionalMap = () => {
                 console.log("Switch")
             }} />
             <button 
-                className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5"
+                className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5 disabled:invisible"
                 onClick={() => {
-                    setVisible(true);
+                    if (!placesLib || !map) {
+                        return;
+                    }
+                    const svc = new placesLib.PlacesService(map);
+                    const bounds = map.getBounds();
+                    setCanPin(false)
+                    setToPin([]);
+                    svc.nearbySearch({
+                        'bounds': bounds,
+                        ...queryText
+                    }, (res, status, pagination) => {
+                        queryToPlaces(res, status, pagination);
+                    });
+                    setLoadingEnabled(false);
                 }}
-            >Open Left Panel</button>
+                disabled={!loadingEnabled}
+            >Load More</button>
             <LeftPanel visible={visible} setVisible={setVisible}>
-                {isSmall ? <SmallMapPanel /> : <LargeMapPanel place={panelObject} />}
+                {isSmall ? <SmallMapPanel place={panelObject} /> : <LargeMapPanel place={panelObject} />}
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}
