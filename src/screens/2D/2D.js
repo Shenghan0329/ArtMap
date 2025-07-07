@@ -1,5 +1,8 @@
 "use client"
 
+import { useState, useEffect, useMemo } from "react";
+import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
+
 import SmallMapPanel from "./SmallMapPanel/SmallMapPanel";  
 import LargeMapPanel from "./LargeMapPanel/LargeMapPanel";
 
@@ -7,9 +10,9 @@ import ZoomButtons from "@/components/Buttons/ZoomButtons";
 import SwitchButton from "@/components/Buttons/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
-import { useState, useEffect, useMemo } from "react";
-import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
-import { largeMapQuery, smallMapQuery } from "@/queries/google_map_queries";
+
+import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
+import MAP_OPTIONS from "@/constants/mapOptions";
 
 const TwoDimensionalMap = () => {
     const map = useMap();
@@ -17,7 +20,7 @@ const TwoDimensionalMap = () => {
     const [locationInit, setLocationInit] = useState(false);
     const [visible, setVisible] = useState(false);
 
-    const [zoom, setZoom] = useState(13);
+    const [zoom, setZoom] = useState(MAP_OPTIONS.ZOOM_LEVEL);
     const [isSmall, setIsSmall] = useState(false);
     const [queryText, setQueryText] = useState(smallMapQuery);
     const [loadingEnabled, setLoadingEnabled] = useState(false);
@@ -35,17 +38,39 @@ const TwoDimensionalMap = () => {
         if(map) map.setZoom(map.getZoom() - 1);
     };
 
-    const queryToPlaces = async (res, status, pagination, maxResults = 40) => {
-        if (maxResults <= pinned.length || status !== 'OK') {
-            return;
-        }
-        setToPin(prev => [...prev, ...res]);
-        console.log(res);
+    const queryToPlaces = async (res, status, pagination) => {
+        setToPin(prev => {
+            return [...prev, ...res]
+        });
         if (pagination.hasNextPage) {
             pagination.nextPage();
         } else {
             setCanPin(true);
         }
+    }
+
+    const getMarkers =() => {
+        if (!placesLib || !map) {
+            return;
+        }
+        const svc = new placesLib.PlacesService(map);
+        const bounds = map.getBounds();
+        setCanPin(false)
+        setToPin([]);
+        let maxResults = MAP_OPTIONS.MAX_LABELS;
+        svc.nearbySearch({
+            'bounds': bounds,
+            ...queryText
+        }, (res, status, pagination) => {
+            console.log(maxResults);
+            if (maxResults >= 0 && status == 'OK') {
+                queryToPlaces(res, status, pagination);
+                maxResults -= res.length;
+            } else {
+                maxResults = MAP_OPTIONS.MAX_LABELS;
+            }
+        });
+        setLoadingEnabled(false);
     }
 
     const markers = useMemo(() => {
@@ -110,6 +135,12 @@ const TwoDimensionalMap = () => {
     }, [canPin]);
 
     useEffect(() => {
+        if (locationInit) {
+            getMarkers();
+        }
+    }, [locationInit])
+
+    useEffect(() => {
         if (!placesLib || !map) return;
 
         console.log(map);
@@ -122,16 +153,17 @@ const TwoDimensionalMap = () => {
                         lng: position.coords.longitude,
                     };
                     map.setCenter(currLocation);
+                    setLocationInit(true);
                 },
                 (err) => {
                     console.log(err);
+                    return;
                 }
             );
         } else {
             console.log("Geolocation is not supported by this browser.");
             return;
         }
-        setLocationInit(true);
 
         // Set Listeners
         map.addListener('zoom_changed', () => {
@@ -139,6 +171,9 @@ const TwoDimensionalMap = () => {
             setZoom(prevZoom => {
                 return zoom;
             })
+        });
+        map.addListener('center_changed', () => {
+            setLoadingEnabled(true);
         });
         
     }, [map, placesLib]);
@@ -155,22 +190,7 @@ const TwoDimensionalMap = () => {
             }} />
             <button 
                 className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5 disabled:invisible"
-                onClick={() => {
-                    if (!placesLib || !map) {
-                        return;
-                    }
-                    const svc = new placesLib.PlacesService(map);
-                    const bounds = map.getBounds();
-                    setCanPin(false)
-                    setToPin([]);
-                    svc.nearbySearch({
-                        'bounds': bounds,
-                        ...queryText
-                    }, (res, status, pagination) => {
-                        queryToPlaces(res, status, pagination);
-                    });
-                    setLoadingEnabled(false);
-                }}
+                onClick={getMarkers}
                 disabled={!loadingEnabled}
             >Load More</button>
             <LeftPanel visible={visible} setVisible={setVisible}>

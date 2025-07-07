@@ -4,43 +4,32 @@ import Image from "next/image";
 import TimeLine from "@/components/TimeLine/TimeLine";
 import CloseButton from "@/components/Buttons/CloseButton";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
-import { smallMapDetailsQuery, smallMapDetailsFields } from "@/queries/google_map_queries";
+import { smallMapDetailsQuery, smallMapDetailsFields } from "@/constants/google_map_queries";
+import { usePlace } from "@/hooks/placeHooks";
 
 const SmallMapPanel = ({place}) => {
     const map = useMap();
     const placesLib = useMapsLibrary('places');
-    const [detailedPlace, setDetailedPlace] = useState({});
-    
-    useEffect(() => {
-        console.log(place);
-        if (!placesLib || !map) return;
-        const svc = new placesLib.PlacesService(map);
-        svc.getDetails({
-            placeId: place.place_id,
-            ...smallMapDetailsQuery
-        }, (place, status) => {
-            if (status === 'OK') {
-                setDetailedPlace(place);
-            }
-        });
-    }, [place, map, placesLib]);
+    const detailedPlace = usePlace(place, map, placesLib, smallMapDetailsQuery);
 
     return (<>
         <div className="text-lg font-bold">{place?.name}</div>
         <div className="text-sm">Location: {place?.vicinity}</div>
         <div className="flex flex-row flex-wrap gap-2">
             {detailedPlace?.photos?.slice(0, 8).map((item, index) => {
-                console.log(item);
+                const imgUrl = item.getUrl();
                 return (
                     <div className="relative basis-19/40 aspect-square bg-gray-100 overflow-hidden" key={index}>
-                    <Image
-                        className="dark:invert"
-                        src="/sample-img.jpg"
-                        alt="Sample Image"
-                        layout="fill"
-                        style={{ objectFit: 'cover' }}
-                        priority
-                    />
+                        <Image
+                            className="dark:invert w-full h-auto"
+                            src={imgUrl}
+                            alt="Sample Image"
+                            fill={true}
+                            sizes='500px'
+                            blurDataURL="/sample-img.jpg"
+                            placeholder="blur"
+                            priority
+                        />
                     </div>
                 )
             })}
