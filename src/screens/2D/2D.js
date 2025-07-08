@@ -19,6 +19,7 @@ const TwoDimensionalMap = () => {
     const placesLib = useMapsLibrary('places');
     const [locationInit, setLocationInit] = useState(false);
     const [visible, setVisible] = useState(false);
+    const [is2D, setIs2D] = useState(true);
 
     const [zoom, setZoom] = useState(MAP_OPTIONS.ZOOM_LEVEL);
     const [isSmall, setIsSmall] = useState(false);
@@ -138,7 +139,19 @@ const TwoDimensionalMap = () => {
         if (locationInit) {
             getMarkers();
         }
-    }, [locationInit])
+    }, [locationInit]);
+
+    useEffect(() => {
+        if (map) {
+            const streetView = map.getStreetView();
+            if (!is2D) {
+                streetView.setVisible(true);
+                streetView.setPosition(map.getCenter());
+            } else {
+                streetView.setVisible(false);
+            }
+        }
+    }, [is2D]);
 
     useEffect(() => {
         if (!placesLib || !map) return;
@@ -186,7 +199,7 @@ const TwoDimensionalMap = () => {
             />
 
             <SwitchButton onClick={async () => {
-                console.log("Switch")
+                setIs2D(prev => !prev);
             }} />
             <button 
                 className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5 disabled:invisible"

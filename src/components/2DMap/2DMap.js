@@ -8,6 +8,7 @@ const GoogleMapSelector = ({children}) => {
     const map = useMap();
     const defaultMapOptions = {
         disableDefaultUI: true,
+        streetViewControl: false,
     };
 
     return (
