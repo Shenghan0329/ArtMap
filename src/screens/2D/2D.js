@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext, use } from "react";
 import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
+import { ErrorContext } from "@/app/page";
+import { useLocationInit } from "@/hooks/mapHooks";
 
 import SmallMapPanel from "./SmallMapPanel/SmallMapPanel";  
 import LargeMapPanel from "./LargeMapPanel/LargeMapPanel";
@@ -15,16 +17,25 @@ import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 
 const TwoDimensionalMap = () => {
+    const {setError} = useContext(ErrorContext);
     const map = useMap();
     const placesLib = useMapsLibrary('places');
-    const [locationInit, setLocationInit] = useState(false);
+
+    const locationInit = useLocationInit(map, placesLib);
+    const [loadingEnabled, setLoadingEnabled] = useState(false);
+
     const [visible, setVisible] = useState(false);
     const [is2D, setIs2D] = useState(true);
-
     const [zoom, setZoom] = useState(MAP_OPTIONS.ZOOM_LEVEL);
-    const [isSmall, setIsSmall] = useState(false);
+
+    const [selectedPos, setSelectedPos] = useState(null);
+    const [selectedMarker, setSelectedMarker] = useState(-1);
+    const [streetView, setStreetView] = useState(null);
+    const [streetViewAvailable, setStreetViewAvailable] = useState(false);
+
+    const [isSmall, setIsSmall] = useState(true);
     const [queryText, setQueryText] = useState(smallMapQuery);
-    const [loadingEnabled, setLoadingEnabled] = useState(false);
+    
 
     const [canPin, setCanPin] = useState(false);
     const [toPin, setToPin] = useState([]);
@@ -50,10 +61,14 @@ const TwoDimensionalMap = () => {
         }
     }
 
-    const getMarkers =() => {
+    const getMarkers = () => {
         if (!placesLib || !map) {
             return;
         }
+        // Reset selected Marker and Position
+        setSelectedMarker(-1);
+        setSelectedPos(null);
+        // Load target
         const svc = new placesLib.PlacesService(map);
         const bounds = map.getBounds();
         setCanPin(false)
@@ -63,7 +78,6 @@ const TwoDimensionalMap = () => {
             'bounds': bounds,
             ...queryText
         }, (res, status, pagination) => {
-            console.log(maxResults);
             if (maxResults >= 0 && status == 'OK') {
                 queryToPlaces(res, status, pagination);
                 maxResults -= res.length;
@@ -97,29 +111,29 @@ const TwoDimensionalMap = () => {
                     key={getKey(place.formatted_address, index)}
                     onClick={() => {
                         setPanelObject(place);
+                        setSelectedPos(place.geometry.location);
+                        setSelectedMarker(index);
                         setVisible(true);
                     }}
                 >
                     <Pin
-                        background={'#0f9d58'}
+                        background={selectedMarker == index ? 'red' : 'blue'}
                         borderColor={'#006425'}
                         glyphColor={'#60d98f'}
-                        
                     />
                 </AdvancedMarker>
                 )
             }) 
         )
-    }, [pinned]);
+    }, [pinned, selectedMarker]);
 
     useEffect(() => {
-        setLoadingEnabled(true);
-        if (zoom < 12) {
-            setIsSmall(false);
-        } else {
+        if (zoom > 13) {
             setIsSmall(true);
+        } else {
+            setIsSmall(false);
         }
-    }, [zoom]);
+    }, [zoom])
 
     useEffect(() => {
         if (isSmall) {
@@ -136,71 +150,72 @@ const TwoDimensionalMap = () => {
     }, [canPin]);
 
     useEffect(() => {
-        if (locationInit) {
-            getMarkers();
-        }
-    }, [locationInit]);
+        getMarkers();
+    }, [queryText, locationInit]);
 
     useEffect(() => {
-        if (map) {
-            const streetView = map.getStreetView();
-            if (!is2D) {
-                streetView.setVisible(true);
-                streetView.setPosition(map.getCenter());
-            } else {
-                streetView.setVisible(false);
-            }
+        if (selectedPos !== null && streetView) {
+            streetView.setPosition(selectedPos);
         }
-    }, [is2D]);
+    }, [selectedPos]);
+
+    useEffect(() => {
+        if (!streetView) return; 
+        if (!is2D && isSmall && streetViewAvailable) {
+            streetView.setVisible(true);       
+        } else {
+            streetView.setVisible(false);
+        }
+    }, [is2D, streetViewAvailable]);
+
 
     useEffect(() => {
         if (!placesLib || !map) return;
-
-        console.log(map);
-        // Set Current Location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const currLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    };
-                    map.setCenter(currLocation);
-                    setLocationInit(true);
-                },
-                (err) => {
-                    console.log(err);
-                    return;
-                }
-            );
-        } else {
-            console.log("Geolocation is not supported by this browser.");
-            return;
-        }
-
-        // Set Listeners
+                // Set Listeners
         map.addListener('zoom_changed', () => {
             const zoom = map.getZoom();
-            setZoom(prevZoom => {
-                return zoom;
-            })
+            setLoadingEnabled(true);
+            setZoom(zoom);
         });
         map.addListener('center_changed', () => {
             setLoadingEnabled(true);
         });
-        
     }, [map, placesLib]);
 
+    useEffect(() => {
+        if (!map) return; 
+        const streetView = map.getStreetView();
+        setStreetView(streetView);
+        streetView.setZoom(0);
+        streetView.addListener("position_changed", () => {
+            setStreetViewAvailable(true);
+        });
+        streetView.addListener("status_changed", () => {
+            console.log(streetView.getPov(), streetView.getStatus(), streetView.getZoom());
+            if (streetView.getStatus() !== "OK") {
+                setError("3D_VIEW_NOT_AVAILABLE");
+                setStreetViewAvailable(false);
+                setIs2D(true);
+            } else {
+                setStreetViewAvailable(true);
+            }
+        });
+    }, [map]);
+
+    
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
                 handleZoomOut={handleZoomOut}
             />
-
-            <SwitchButton onClick={async () => {
-                setIs2D(prev => !prev);
-            }} />
+            {
+                isSmall && selectedPos !== null && (
+                    <SwitchButton onClick={async () => {
+                        setIs2D(prev => !prev);
+                    }} />
+                )
+            }
             <button 
                 className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5 disabled:invisible"
                 onClick={getMarkers}
