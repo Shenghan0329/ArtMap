@@ -15,6 +15,7 @@ import GoogleMapSelector from "@/components/2DMap/2DMap";
 
 import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
+import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 
 const TwoDimensionalMap = () => {
     const {setError} = useContext(ErrorContext);
@@ -26,7 +27,7 @@ const TwoDimensionalMap = () => {
 
     const [visible, setVisible] = useState(false);
     const [is2D, setIs2D] = useState(true);
-    const [zoom, setZoom] = useState(MAP_OPTIONS.ZOOM_LEVEL);
+    const [zoom, setZoom] = useState(MAP_OPTIONS.defaultZoom);
 
     const [selectedPos, setSelectedPos] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(-1);
@@ -43,11 +44,17 @@ const TwoDimensionalMap = () => {
     const [panelObject, setPanelObject] = useState({});
 
     const handleZoomIn = () => {
-        if(map) map.setZoom(map.getZoom() + 1);
+        if (map) {
+            if (is2D) map.setZoom(map.getZoom() + 1);
+            else streetView.setZoom(streetView.getZoom() + 0.5);
+        }
     };
 
     const handleZoomOut = () => {
-        if(map) map.setZoom(map.getZoom() - 1);
+        if (map) {
+            if (is2D) map.setZoom(map.getZoom() - 1);
+            else streetView.setZoom(streetView.getZoom() - 0.5);
+        }
     };
 
     const queryToPlaces = async (res, status, pagination) => {
@@ -61,7 +68,7 @@ const TwoDimensionalMap = () => {
         }
     }
 
-    const getMarkers = () => {
+    const getMarkers = (toStore = false) => {
         if (!placesLib || !map) {
             return;
         }
@@ -185,6 +192,7 @@ const TwoDimensionalMap = () => {
     useEffect(() => {
         if (!map) return; 
         const streetView = map.getStreetView();
+        streetView.setOptions(STREETVIEW_OPTIONS);
         setStreetView(streetView);
         streetView.setZoom(0);
         streetView.addListener("position_changed", () => {
