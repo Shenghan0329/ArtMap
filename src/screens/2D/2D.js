@@ -12,6 +12,7 @@ import ZoomButtons from "@/components/Buttons/ZoomButtons";
 import SwitchButton from "@/components/Buttons/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
+import { PictureFrame3D } from "@/components/3D/PictureFrame3D";
 
 import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
@@ -213,6 +214,9 @@ const TwoDimensionalMap = () => {
     
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
+            {!is2D && <PictureFrame3D images={[
+                { position: [0, 0, 0], rotation: [0, 0, 0], url: '/sample-img.jpg',}
+            ]}/>}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
                 handleZoomOut={handleZoomOut}
@@ -234,6 +238,7 @@ const TwoDimensionalMap = () => {
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}
+                
             </GoogleMapSelector>
         </div>
     );
