@@ -13,9 +13,9 @@ const StreetViewPanel = ({artwork}) => {
     const detailedPlace = usePlace(artwork, map, placesLib, smallMapDetailsQuery);
 
     return (<>
-        <div className="text-lg font-bold">{artwork?.name}</div>
-        <div className="text-sm">Location: {artwork?.vicinity}</div>
-        <div className="flex flex-row flex-wrap gap-2">
+        <div className="text-white text-lg font-bold">{artwork?.name}</div>
+        <div className="text-white text-sm">Location: {artwork?.vicinity}</div>
+        <div className="text-white flex flex-row flex-wrap gap-2">
             {detailedPlace?.photos?.slice(0, 8).map((item, index) => {
                 const imgUrl = item.getUrl();
                 return (
