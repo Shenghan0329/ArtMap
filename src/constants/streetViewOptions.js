@@ -1,5 +1,9 @@
 const STREETVIEW_OPTIONS = {
-    disableDefaultUI: true, 
+    addressControl: false,
+    clickToGo: false,
+    fullscreenControl: false,
+    zoomControl: false,
+    scrollwheel: false,
     enableCloseButton: false
 }
 export default STREETVIEW_OPTIONS;
