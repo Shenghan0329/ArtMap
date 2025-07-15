@@ -17,6 +17,7 @@ import { PictureFrame3D } from "@/components/3D/PictureFrame3D";
 import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
+import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
 
 const TwoDimensionalMap = () => {
     const {setError} = useContext(ErrorContext);
@@ -43,6 +44,7 @@ const TwoDimensionalMap = () => {
     const [toPin, setToPin] = useState([]);
     const [pinned, setPinned] = useState([]);
     const [panelObject, setPanelObject] = useState({});
+    const [artwork, setArtwork] = useState({});
 
     const handleZoomIn = () => {
         if (map) {
@@ -215,7 +217,9 @@ const TwoDimensionalMap = () => {
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
             {!is2D && <PictureFrame3D images={[
-                { position: [0, 0, 0], rotation: [0, 0, 0], url: '/sample-img.jpg',}
+                { position: [0, 0, 0], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '1'}); setVisible(true);}},
+                { position: [-1, 0, -3], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '2'}); setVisible(true);}},
+                { position: [-2, 0, -6], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '3'}); setVisible(true);}}
             ]}/>}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
@@ -233,8 +237,10 @@ const TwoDimensionalMap = () => {
                 onClick={getMarkers}
                 disabled={!loadingEnabled}
             >Load More</button>
-            <LeftPanel visible={visible} setVisible={setVisible}>
-                {isSmall ? <SmallMapPanel place={panelObject} /> : <LargeMapPanel place={panelObject} />}
+            <LeftPanel visible={visible} setVisible={setVisible} transparent={isSmall && !is2D}>
+                {isSmall ? 
+                    (is2D ? <SmallMapPanel place={panelObject} /> : <StreetViewPanel artwork={artwork} /> ): 
+                    <LargeMapPanel place={panelObject} />}
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}

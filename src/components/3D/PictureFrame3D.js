@@ -8,21 +8,25 @@ import getUuid from 'uuid-by-string'
 
 const GOLDENRATIO = 1.61803398875
 
-export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO, backgroundColor = 'transparent', showFog = false }) => (
+export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => (
   <div style={{ 
     width: '100vw', 
     height: '100vh', 
     position: 'fixed',
     top: 0,
     left: 0,
-    zIndex: 1
+    zIndex: 1,
+    pointerEvents: 'none',
+    display: 'flex',
+    flexDirection: 'row-reverse',
+    
   }}>
     <Canvas 
       dpr={[1, 1.5]} 
       camera={{ fov: 70, position: [0, 2, 15] }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '30vw', height:'100vh'}}
       gl={{ alpha: true }}
-      shadows // Enable shadows
+      shadows
     >
       {backgroundColor !== 'transparent' && <color attach="background" args={[backgroundColor]} />}
       {showFog && <fog attach="fog" args={[backgroundColor || '#191920', 0, 15]} />}
@@ -30,7 +34,7 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
       {/* Add lighting for shadows */}
       <ambientLight intensity={0.3} />
       <directionalLight 
-        position={[0, 10, -5]} 
+        position={[0, 20, -5]} 
         intensity={1}
         castShadow
         shadow-mapSize={[1024, 1024]}
@@ -45,24 +49,11 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
         <Frames images={images} frameWidth={frameWidth} frameHeight={frameHeight} />
         
         {/* Ground plane to receive shadows - angled towards audience */}
-        <mesh rotation={[-Math.PI / 3, 0, 0]} position={[0, -1.5, 2]} receiveShadow>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
           <planeGeometry args={[20, 20]} />
           <shadowMaterial transparent opacity={0.4} />
         </mesh>
         
-        {/* Alternative: ContactShadows (comment out the mesh above to use this) */}
-        {/*
-        <ContactShadows
-          rotation-x={Math.PI / 2}
-          position={[0, -0.8, 0]}
-          opacity={0.6}
-          width={10}
-          height={10}
-          blur={2}
-          far={4}
-          color="#000000"
-        />
-        */}
       </group>
       <Environment preset="city" />
     </Canvas>
@@ -97,10 +88,7 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     e.stopPropagation()
     const objectName = e.object.name
     if (clicked.current === e.object) {
-      
-    } else {
-      // Navigate to specific frame
-      router.push(`/gallery/${objectName}`)
+      console.log(e.object);
     }
   }
 
@@ -112,21 +100,23 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     <group
       ref={ref}
       onClick={handleClick}
+      styles={{ pointerEvents: 'auto' }}
     >
       {images.map((props) => (
         <Frame 
-          key={props.url} 
+          key={getUuid(props.url+Math.random())} 
           {...props} 
           selectedId={selectedId} 
           frameWidth={frameWidth} 
-          frameHeight={frameHeight} 
+          frameHeight={frameHeight}
+          onClick={props.onClick}
         />
       ))}
     </group>
   )
 }
 
-function Frame({ url, selectedId, c = new THREE.Color(), ...props }) {
+function Frame({ url, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c = new THREE.Color(), onClick = null,  ...props }) {
   const image = useRef()
   const frame = useRef()
   const [hovered, hover] = useState(false)
@@ -161,8 +151,10 @@ function Frame({ url, selectedId, c = new THREE.Color(), ...props }) {
         name={name}
         onPointerOver={(e) => (e.stopPropagation(), hover(true))}
         onPointerOut={() => hover(false)}
-        scale={[1, GOLDENRATIO, 0.05]}
-        position={[0, GOLDENRATIO / 2, 0]}
+        onClick={onClick}
+        scale={[frameWidth, frameHeight, 0.05]}
+        styles={{ pointerEvents: 'auto' }}
+        position={[0, frameHeight / 2, 0]}
         castShadow
         receiveShadow
       >
