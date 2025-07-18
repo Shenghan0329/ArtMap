@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { useEffect, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useEffect, useRef, useState, useMemo } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useCursor, Image, Text, Environment, ContactShadows } from '@react-three/drei'
 import { useRouter, useParams } from 'next/navigation'
 import { easing } from 'maath'
@@ -8,57 +8,110 @@ import getUuid from 'uuid-by-string'
 
 const GOLDENRATIO = 1.61803398875
 
-export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => (
-  <div style={{ 
-    width: '100vw', 
-    height: '100vh', 
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: 1,
-    pointerEvents: 'none',
-    display: 'flex',
-    flexDirection: 'row-reverse',
+export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', pov, showFog = false }) => {
+  const [cameraData, setCameraData] = useState(null)
+  
+  // Calculate camera position and rotation directly from pov
+  const cameraConfig = useMemo(() => {
+    const heading = -pov.heading * Math.PI / 180
+    const pitch = pov.pitch * Math.PI / 180
     
-  }}>
-    <Canvas 
-      dpr={[1, 1.5]} 
-      camera={{ fov: 70, position: [0, 2, 15] }}
-      style={{ width: '30vw', height:'100vh'}}
-      gl={{ alpha: true }}
-      shadows
-    >
-      {backgroundColor !== 'transparent' && <color attach="background" args={[backgroundColor]} />}
-      {showFog && <fog attach="fog" args={[backgroundColor || '#191920', 0, 15]} />}
+    return {
+      fov: 50,
+      position: [0, 0, 0],
+      rotation: [pitch, heading, 0]
+    }
+  }, [pov.heading, pov.pitch])
+  
+  return (
+    <div style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      zIndex: 1,
+      pointerEvents: 'none',
+      display: 'flex',
+      flexDirection: 'row-reverse',
+    }}>
+      <Canvas 
+        dpr={[1, 1.5]} 
+        camera={cameraConfig}
+        style={{ width: '100vw', height:'100vh', pointerEvents: 'none' }}
+        gl={{ alpha: true }}
+        onPointerMissed={(e)=>{
+          console.log(e.target.style);
+          
+          e.target.style.pointerEvents = 'none';
+        }}
+        shadows
+      >
+        {backgroundColor !== 'transparent' && <color attach="background" args={[backgroundColor]} />}
+        {showFog && <fog attach="fog" args={[backgroundColor || '#191920', 0, 15]} />}
+        
+        {/* Add lighting for shadows */}
+        <ambientLight intensity={0.3} />
+        <directionalLight 
+          position={[0, 20, -5]} 
+          intensity={1}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-camera-far={50}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+        />
+        
+        <group position={[0, -0.5, -5]}>
+          <Frames 
+            images={images} 
+            frameWidth={frameWidth} 
+            frameHeight={frameHeight} 
+            pov={pov}
+          />
+          
+          {/* Ground plane to receive shadows - angled towards audience */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
+            <planeGeometry args={[20, 20]} />
+            <shadowMaterial transparent opacity={0.4} />
+          </mesh>
+          
+        </group>
+        <Environment preset="city" />
+        
+        {/* Camera controller component */}
+        <CameraController pov={pov} />
+        
+        {/* Data provider for external overlay */}
+        <CameraDataProvider onUpdate={setCameraData} />
+      </Canvas>
       
-      {/* Add lighting for shadows */}
-      <ambientLight intensity={0.3} />
-      <directionalLight 
-        position={[0, 20, -5]} 
-        intensity={1}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
+      {/* External overlay */}
+      <FrameOverlay 
+        images={images}
+        cameraData={cameraData}
       />
-      
-      <group position={[0, -0.5, -5]}>
-        <Frames images={images} frameWidth={frameWidth} frameHeight={frameHeight} />
-        
-        {/* Ground plane to receive shadows - angled towards audience */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
-          <planeGeometry args={[20, 20]} />
-          <shadowMaterial transparent opacity={0.4} />
-        </mesh>
-        
-      </group>
-      <Environment preset="city" />
-    </Canvas>
-  </div>
-)
+    </div>
+  )
+}
+
+// Component to handle camera updates within the Canvas
+function CameraController({ pov }) {
+  const { camera } = useThree()
+  
+  useEffect(() => {
+    const heading = -1 * pov.heading * Math.PI / 180
+    const pitch = 1 * pov.pitch * Math.PI / 180
+    
+    // Update camera rotation directly
+    camera.rotation.set(pitch, heading, 0)
+    
+  }, [camera, pov.heading, pov.pitch])
+  
+  return null
+}
 
 function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THREE.Quaternion(), p = new THREE.Vector3() }) {
   const ref = useRef()
@@ -79,32 +132,22 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     }
   }, [selectedId, frameHeight])
 
+  // Only use easing for frame selection, not for pov changes
   useFrame((state, dt) => {
-    easing.damp3(state.camera.position, p, 0.4, dt)
-    easing.dampQ(state.camera.quaternion, q, 0.4, dt)
-  })
-
-  const handleClick = (e) => {
-    e.stopPropagation()
-    const objectName = e.object.name
-    if (clicked.current === e.object) {
-      console.log(e.object);
+    if (clicked.current) {
+      // Only apply easing when focusing on a specific frame
+      easing.damp3(state.camera.position, p, 0.4, dt)
+      easing.dampQ(state.camera.quaternion, q, 0.4, dt)
     }
-  }
-
-  const handlePointerMissed = () => {
-    router.push('/gallery')
-  }
+  })
 
   return (
     <group
       ref={ref}
-      onClick={handleClick}
-      styles={{ pointerEvents: 'auto' }}
     >
-      {images.map((props) => (
+      {images.map((props, index) => (
         <Frame 
-          key={getUuid(props.url+Math.random())} 
+          key={getUuid(props.artwork.name)} 
           {...props} 
           selectedId={selectedId} 
           frameWidth={frameWidth} 
@@ -116,13 +159,13 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
   )
 }
 
-function Frame({ url, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c = new THREE.Color(), onClick = null,  ...props }) {
+function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c = new THREE.Color(), onClick = null, ...props }) {
   const image = useRef()
   const frame = useRef()
   const [hovered, hover] = useState(false)
   const [rnd, setRnd] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const name = getUuid(url)
+  const name = getUuid(artwork.name)
   const isActive = selectedId === name
 
   // Set random value only on client side after mount
@@ -153,7 +196,6 @@ function Frame({ url, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c =
         onPointerOut={() => hover(false)}
         onClick={onClick}
         scale={[frameWidth, frameHeight, 0.05]}
-        styles={{ pointerEvents: 'auto' }}
         position={[0, frameHeight / 2, 0]}
         castShadow
         receiveShadow
@@ -164,11 +206,128 @@ function Frame({ url, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c =
           <boxGeometry />
           <meshBasicMaterial toneMapped={false} fog={false} />
         </mesh>
-        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={url} />
+        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={artwork.url} />
       </mesh>
       <Text maxWidth={0.1} anchorX="left" anchorY="top" position={[0.55, GOLDENRATIO, 0]} fontSize={0.025}>
         {name.split('-').join(' ')}
       </Text>
     </group>
+  )
+}
+
+// Simple data provider inside Canvas - throttled to avoid infinite loops
+function CameraDataProvider({ onUpdate }) {
+  const { camera, scene } = useThree()
+  const lastUpdateRef = useRef(0)
+  
+  useFrame(() => {
+    const now = performance.now()
+    // Only update every 32ms (~30fps) to avoid infinite loops
+    if (now - lastUpdateRef.current > 32) {
+      lastUpdateRef.current = now
+      onUpdate({ camera, scene })
+    }
+  })
+  
+  return null
+}
+
+function FrameOverlay({ images, cameraData }) {
+  const [framePositions, setFramePositions] = useState([])
+  const cameraDataRef = useRef(cameraData)
+  
+  // Keep camera data ref current without triggering effects
+  cameraDataRef.current = cameraData
+  
+  useEffect(() => {
+    let animationId
+    
+    const updatePositions = () => {
+      const currentCameraData = cameraDataRef.current
+      if (!currentCameraData) {
+        animationId = requestAnimationFrame(updatePositions)
+        return
+      }
+      
+      const { camera, scene } = currentCameraData
+      const positions = []
+      
+      images.forEach((imageProps, index) => {
+        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork.name))
+        if (frameObject) {
+          try {
+            // Get world position of the frame
+            const worldPosition = new THREE.Vector3()
+            frameObject.getWorldPosition(worldPosition)
+            
+            // Project to screen coordinates
+            const screenPosition = worldPosition.clone().project(camera)
+            
+            // Check if the frame is in view (not behind camera)
+            if (screenPosition.z > 1) return
+            
+            // Convert normalized device coordinates to screen pixels
+            const x = ((screenPosition.x + 1) / 2) * window.innerWidth
+            const y = ((1 - screenPosition.y) / 2) * window.innerHeight
+            
+            // Calculate frame size in screen space (approximate)
+            const distance = camera.position.distanceTo(worldPosition)
+            const frameScreenWidth = (30 / distance) * 25
+            const frameScreenHeight = (50 / distance) * 25
+            
+            positions.push({
+              x: x - frameScreenWidth / 2,
+              y: y - frameScreenHeight / 2,
+              width: frameScreenWidth,
+              height: frameScreenHeight,
+              onClick: imageProps.onClick,
+              index: index
+            })
+          } catch (error) {
+            console.error('Error calculating frame position:', error)
+          }
+        }
+      })
+      
+      setFramePositions(positions)
+      animationId = requestAnimationFrame(updatePositions)
+    }
+    
+    updatePositions()
+    
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+    }
+  }, [images]) // Only depend on images, not cameraData
+  
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: '100vw',
+      height: '100vh',
+      pointerEvents: 'none',
+      zIndex: 10
+    }}>
+      {framePositions.map((pos) => (
+        <div
+          key={pos.index}
+          style={{
+            position: 'absolute',
+            left: `${pos.x}px`,
+            top: `${pos.y}px`,
+            width: `${pos.width}px`,
+            height: `${pos.height}px`,
+            pointerEvents: 'auto',
+            cursor: 'pointer',
+            background: 'rgba(255,0,0,0.3)', // Remove this line to make invisible
+          }}
+          onClick={pos.onClick}
+        />
+      ))}
+    </div>
   )
 }

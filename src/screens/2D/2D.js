@@ -30,6 +30,7 @@ const TwoDimensionalMap = () => {
     const [visible, setVisible] = useState(false);
     const [is2D, setIs2D] = useState(true);
     const [zoom, setZoom] = useState(MAP_OPTIONS.defaultZoom);
+    const [pov, setPov] = useState({heading: 0, pitch: 0});
 
     const [selectedPos, setSelectedPos] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(-1);
@@ -198,11 +199,12 @@ const TwoDimensionalMap = () => {
         streetView.setOptions(STREETVIEW_OPTIONS);
         setStreetView(streetView);
         streetView.setZoom(0);
+        const pov = streetView.getPov();
+        setPov(pov);
         streetView.addListener("position_changed", () => {
             setStreetViewAvailable(true);
         });
         streetView.addListener("status_changed", () => {
-            console.log(streetView.getPov(), streetView.getStatus(), streetView.getZoom());
             if (streetView.getStatus() !== "OK") {
                 setError("3D_VIEW_NOT_AVAILABLE");
                 setStreetViewAvailable(false);
@@ -211,15 +213,19 @@ const TwoDimensionalMap = () => {
                 setStreetViewAvailable(true);
             }
         });
+        streetView.addListener("pov_changed", () => {
+            const pov = streetView.getPov();
+            setPov(pov);
+        });
     }, [map]);
 
     
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
-            {!is2D && <PictureFrame3D images={[
-                { position: [0, 0, 0], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '1'}); setVisible(true);}},
-                { position: [-1, 0, -3], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '2'}); setVisible(true);}},
-                { position: [-2, 0, -6], rotation: [0, 0, 0], url: '/sample-img.jpg', onClick: () => {setArtwork({name: '3'}); setVisible(true);}}
+            {!is2D && <PictureFrame3D pov={pov} images={[
+                { position: [0, 0, 0], rotation: [0, 0, 0], artwork: {name: '1', url: '/sample-img.jpg', }, onClick: () => {setArtwork({name: '1'}); setVisible(true);}},
+                { position: [-1, 0, -3], rotation: [0, 0, 0], artwork: {name: '2', url: '/sample-img.jpg',}, onClick: () => {setArtwork({name: '2'}); setVisible(true);}},
+                { position: [-2, 0, -6], rotation: [0, 0, 0], artwork: {name: '3', url: '/sample-img.jpg', }, onClick: () => {setArtwork({name: '3'}); setVisible(true);}}
             ]}/>}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
