@@ -15,13 +15,14 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
   const cameraConfig = useMemo(() => {
     const heading = -pov.heading * Math.PI / 180
     const pitch = pov.pitch * Math.PI / 180
+    const fov = 180 / Math.pow(2,pov.zoom);
     
     return {
-      fov: 50,
+      fov: fov,
       position: [0, 0, 0],
       rotation: [pitch, heading, 0]
     }
-  }, [pov.heading, pov.pitch])
+  }, [pov.heading, pov.pitch, pov.zoom])
   
   return (
     <div style={{ 
@@ -69,7 +70,6 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
             images={images} 
             frameWidth={frameWidth} 
             frameHeight={frameHeight} 
-            pov={pov}
           />
           
           {/* Ground plane to receive shadows - angled towards audience */}
@@ -104,11 +104,15 @@ function CameraController({ pov }) {
   useEffect(() => {
     const heading = -1 * pov.heading * Math.PI / 180
     const pitch = 1 * pov.pitch * Math.PI / 180
+    const fov = 180 / Math.pow(2, pov.zoom)
     
-    // Update camera rotation directly
+    // Update camera rotation
     camera.rotation.set(pitch, heading, 0)
     
-  }, [camera, pov.heading, pov.pitch])
+    // Update camera FOV
+    camera.fov = fov
+    camera.updateProjectionMatrix()
+  }, [camera, pov.heading, pov.pitch, pov.zoom])
   
   return null
 }

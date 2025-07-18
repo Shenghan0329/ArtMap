@@ -19,6 +19,8 @@ import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
 
+const STREETVIEW_MIN_ZOOM = 0.8140927000158323
+
 const TwoDimensionalMap = () => {
     const {setError} = useContext(ErrorContext);
     const map = useMap();
@@ -50,14 +52,14 @@ const TwoDimensionalMap = () => {
     const handleZoomIn = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() + 1);
-            else streetView.setZoom(streetView.getZoom() + 0.5);
+            else streetView.setZoom(streetView.getZoom() + 0.2);
         }
     };
 
     const handleZoomOut = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() - 1);
-            else streetView.setZoom(streetView.getZoom() - 0.5);
+            else streetView.setZoom(Math.max(streetView.getZoom() - 0.2, STREETVIEW_MIN_ZOOM));
         }
     };
 
@@ -214,6 +216,10 @@ const TwoDimensionalMap = () => {
             }
         });
         streetView.addListener("pov_changed", () => {
+            const pov = streetView.getPov();
+            setPov(pov);
+        });
+        streetView.addListener("zoom_changed", () => {
             const pov = streetView.getPov();
             setPov(pov);
         });
