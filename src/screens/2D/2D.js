@@ -229,7 +229,6 @@ const TwoDimensionalMap = () => {
         });
         streetView.addListener("pov_changed", () => {
             const pov = streetView.getPov();
-            // console.log(pov);
             if (pov.zoom < STREETVIEW_MIN_ZOOM) {
                 pov.zoom = STREETVIEW_MIN_ZOOM;
                 streetView.setPov(pov);
@@ -240,6 +239,7 @@ const TwoDimensionalMap = () => {
                 streetView.setPov(pov);
                 streetView.setZoom(pov.zoom);
             }
+            console.log(pov);
             setPov(pov);
         });
     }, [map]);

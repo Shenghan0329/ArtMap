@@ -8,6 +8,9 @@ import getUuid from 'uuid-by-string'
 
 const GOLDENRATIO = 1.61803398875
 
+const STREETVIEW_MIN_ZOOM = 0.8140927000158323
+const STREETVIEW_MAX_ZOOM = 3
+
 export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', pov, showFog = false }) => {
   const [cameraData, setCameraData] = useState(null)
   
@@ -15,6 +18,7 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
   const cameraConfig = useMemo(() => {
     const heading = -pov.heading * Math.PI / 180
     const pitch = pov.pitch * Math.PI / 180
+    pov.zoom = Math.min(Math.max(pov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM);
     const fov = 180 / Math.pow(2,pov.zoom);
     
     return {
