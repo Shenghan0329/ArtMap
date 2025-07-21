@@ -88,10 +88,12 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
         <CameraDataProvider onUpdate={setCameraData} />
       </Canvas>
       
-      {/* External overlay */}
+      {/* External overlay with frame dimensions */}
       <FrameOverlay 
         images={images}
         cameraData={cameraData}
+        frameWidth={frameWidth}
+        frameHeight={frameHeight}
       />
     </div>
   )
@@ -236,7 +238,7 @@ function CameraDataProvider({ onUpdate }) {
   return null
 }
 
-function FrameOverlay({ images, cameraData }) {
+function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDENRATIO }) {
   const [framePositions, setFramePositions] = useState([])
   const cameraDataRef = useRef(cameraData)
   
@@ -260,33 +262,59 @@ function FrameOverlay({ images, cameraData }) {
         const frameObject = scene.getObjectByName(getUuid(imageProps.artwork.name))
         if (frameObject) {
           try {
-            // Get world position of the frame
-            const worldPosition = new THREE.Vector3()
-            frameObject.getWorldPosition(worldPosition)
+            // Get the frame's world matrix
+            frameObject.updateMatrixWorld(true)
             
-            // Project to screen coordinates
-            const screenPosition = worldPosition.clone().project(camera)
+            // Focus only on the front face of the frame for more accurate clickable area
+            // BoxGeometry creates a box from -0.5 to +0.5 in each dimension by default
+            const corners = [
+              new THREE.Vector3(-0.5, -0.5, 0.5), // Bottom left front
+              new THREE.Vector3(0.5, -0.5, 0.5),  // Bottom right front  
+              new THREE.Vector3(0.5, 0.5, 0.5),   // Top right front
+              new THREE.Vector3(-0.5, 0.5, 0.5),  // Top left front
+            ]
             
-            // Check if the frame is in view (not behind camera)
-            if (screenPosition.z > 1) return
-            
-            // Convert normalized device coordinates to screen pixels
-            const x = ((screenPosition.x + 1) / 2) * window.innerWidth
-            const y = ((1 - screenPosition.y) / 2) * window.innerHeight
-            
-            // Calculate frame size in screen space (approximate)
-            const distance = camera.position.distanceTo(worldPosition)
-            const frameScreenWidth = (30 / distance) * 25
-            const frameScreenHeight = (50 / distance) * 25
-            
-            positions.push({
-              x: x - frameScreenWidth / 2,
-              y: y - frameScreenHeight / 2,
-              width: frameScreenWidth,
-              height: frameScreenHeight,
-              onClick: imageProps.onClick,
-              index: index
+            // Transform corners to world space
+            const worldCorners = corners.map(corner => {
+              corner.applyMatrix4(frameObject.matrixWorld)
+              return corner
             })
+            
+            // Project all corners to screen space
+            const screenCorners = worldCorners.map(worldCorner => {
+              const screenPos = worldCorner.clone().project(camera)
+              
+              // Convert normalized device coordinates to screen pixels
+              const x = ((screenPos.x + 1) / 2) * window.innerWidth
+              const y = ((1 - screenPos.y) / 2) * window.innerHeight
+              
+              return { x, y, z: screenPos.z }
+            })
+            
+            // Check if any corner is behind the camera
+            const behindCamera = screenCorners.some(corner => corner.z > 1)
+            if (behindCamera) return
+            
+            // Calculate the bounding box of the projected corners
+            const minX = Math.min(...screenCorners.map(c => c.x))
+            const maxX = Math.max(...screenCorners.map(c => c.x))
+            const minY = Math.min(...screenCorners.map(c => c.y))
+            const maxY = Math.max(...screenCorners.map(c => c.y))
+            
+            const screenWidth = maxX - minX
+            const screenHeight = maxY - minY
+            
+            // Only add frames that are actually visible on screen
+            if (minX < window.innerWidth && maxX > 0 && minY < window.innerHeight && maxY > 0) {
+              positions.push({
+                x: minX,
+                y: minY,
+                width: screenWidth,
+                height: screenHeight,
+                onClick: imageProps.onClick,
+                index: index
+              })
+            }
           } catch (error) {
             console.error('Error calculating frame position:', error)
           }
@@ -304,7 +332,7 @@ function FrameOverlay({ images, cameraData }) {
         cancelAnimationFrame(animationId)
       }
     }
-  }, [images]) // Only depend on images, not cameraData
+  }, [images, frameWidth, frameHeight]) // Include frame dimensions in dependencies
   
   return (
     <div style={{
@@ -327,7 +355,8 @@ function FrameOverlay({ images, cameraData }) {
             height: `${pos.height}px`,
             pointerEvents: 'auto',
             cursor: 'pointer',
-            background: 'rgba(255,0,0,0.3)', // Remove this line to make invisible
+            background: 'rgba(0, 0, 0, 0.1)', // Change to 'rgba(255,0,0,0.1)' for testing
+            // border: '1px solid rgba(255,0,0,0.3)', // Uncomment for testing
           }}
           onClick={pos.onClick}
         />
