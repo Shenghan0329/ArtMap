@@ -20,6 +20,7 @@ import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
+const STREETVIEW_MAX_ZOOM = 3
 
 const TwoDimensionalMap = () => {
     const {setError} = useContext(ErrorContext);
@@ -52,14 +53,25 @@ const TwoDimensionalMap = () => {
     const handleZoomIn = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() + 1);
-            else streetView.setZoom(streetView.getZoom() + 0.2);
+            else {
+                const updatedZoom = Math.min(streetView.getZoom() + 0.2, STREETVIEW_MAX_ZOOM);
+                streetView.setZoom(updatedZoom);
+                streetView.setPov({...pov, zoom: updatedZoom});
+                // console.log({...pov, zoom: updatedZoom});
+                setPov({...pov, zoom: updatedZoom});
+            }
         }
     };
 
     const handleZoomOut = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() - 1);
-            else streetView.setZoom(Math.max(streetView.getZoom() - 0.2, STREETVIEW_MIN_ZOOM));
+            else {
+                const updatedZoom = Math.max(streetView.getZoom() - 0.2, STREETVIEW_MIN_ZOOM);
+                streetView.setZoom(updatedZoom);
+                streetView.setPov({...pov, zoom: updatedZoom});
+                setPov({...pov, zoom: updatedZoom});
+            }
         }
     };
 
@@ -217,9 +229,16 @@ const TwoDimensionalMap = () => {
         });
         streetView.addListener("pov_changed", () => {
             const pov = streetView.getPov();
+            // console.log(pov);
             if (pov.zoom < STREETVIEW_MIN_ZOOM) {
                 pov.zoom = STREETVIEW_MIN_ZOOM;
                 streetView.setPov(pov);
+                streetView.setZoom(pov.zoom);
+            }
+            if (pov.zoom > STREETVIEW_MAX_ZOOM) {
+                pov.zoom = STREETVIEW_MAX_ZOOM;
+                streetView.setPov(pov);
+                streetView.setZoom(pov.zoom);
             }
             setPov(pov);
         });
