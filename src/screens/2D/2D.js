@@ -239,7 +239,7 @@ const TwoDimensionalMap = () => {
                 streetView.setPov(pov);
                 streetView.setZoom(pov.zoom);
             }
-            console.log(pov);
+            // console.log(pov);
             setPov(pov);
         });
     }, [map]);
