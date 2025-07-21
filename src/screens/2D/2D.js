@@ -184,7 +184,7 @@ const TwoDimensionalMap = () => {
 
     useEffect(() => {
         if (!placesLib || !map) return;
-                // Set Listeners
+        // Set Listeners
         map.addListener('zoom_changed', () => {
             const zoom = map.getZoom();
             setLoadingEnabled(true);
@@ -217,10 +217,10 @@ const TwoDimensionalMap = () => {
         });
         streetView.addListener("pov_changed", () => {
             const pov = streetView.getPov();
-            setPov(pov);
-        });
-        streetView.addListener("zoom_changed", () => {
-            const pov = streetView.getPov();
+            if (pov.zoom < STREETVIEW_MIN_ZOOM) {
+                pov.zoom = STREETVIEW_MIN_ZOOM;
+                streetView.setPov(pov);
+            }
             setPov(pov);
         });
     }, [map]);
