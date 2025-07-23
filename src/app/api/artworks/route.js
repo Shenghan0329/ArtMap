@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 const MET_API = 'https://collectionapi.metmuseum.org/public/collection/v1/objects'
 
 export async function GET(request, params) {
@@ -29,19 +31,15 @@ export async function GET(request, params) {
         });
         
         const data = await response.json();
-        const transformed = {
-            ...data,
-            source: 'proxied-through-nextjs'
-        };
-
-        return new Response(JSON.stringify(transformed), {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
+        return NextResponse.json(data);
     } catch (reason) {
         const message = reason instanceof Error ? reason.message : 'Unexpected error';
         
-        return new Response(message, { status: 500 });
+        return NextResponse.json({ 
+                error: message,
+                timestamp: new Date().toISOString(),
+                status: 500,
+            },
+        );
     }
 }

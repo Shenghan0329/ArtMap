@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 const MET_SEARCH_API = 'https://collectionapi.metmuseum.org/public/collection/v1/search'
 
 export async function GET(request, params) {
@@ -83,32 +85,15 @@ export async function GET(request, params) {
         }
         
         const data = await response.json();
-        const transformed = {
-            ...data,
-            source: 'proxied-through-nextjs',
-            requestedAt: new Date().toISOString(),
-            totalResults: data.total || 0
-        };
-
-        return new Response(JSON.stringify(transformed), {
-            headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 's-maxage=300' // Cache for 5 minutes
-            },
-        });
+        return NextResponse.json(data);
     } catch (reason) {
         const message = reason instanceof Error ? reason.message : 'Unexpected error';
-        console.error('Met Search API Error:', reason);
         
-        return new Response(
-            JSON.stringify({ 
+        return NextResponse.json({ 
                 error: message,
-                timestamp: new Date().toISOString()
-            }), 
-            { 
+                timestamp: new Date().toISOString(),
                 status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            }
+            },
         );
     }
 }

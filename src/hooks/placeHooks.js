@@ -5,7 +5,6 @@ export function usePlace(place, map, placesLib, query = smallMapDetailsQuery) {
     const [detailedPlace, setDetailedPlace] = useState({});
         
     useEffect(() => {
-        console.log(place);
         if (!placesLib || !map) return;
         if (!place?.place_id) return;
         const svc = new placesLib.PlacesService(map);
