@@ -1,99 +1,46 @@
-import { NextResponse } from "next/server";
-
-const MET_SEARCH_API = 'https://collectionapi.metmuseum.org/public/collection/v1/search'
+const CHICAGO_SEARCH_API = 'https://api.artic.edu/api/v1/artworks/search'
 
 export async function GET(request, params) {
     try {
         // Extract search parameters from the URL
         const { searchParams } = new URL(request.url);
         
-        // Define which parameters are booleans vs other types
-        const booleanParams = [
-            'isHighlight',    // Boolean - highlighted objects
-            'title',          // Boolean - search against title
-            'tags',           // Boolean - search against tags
-            'isOnView',       // Boolean - currently on view
-            'artistOrCulture', // Boolean - search against artist/culture
-            'hasImages'       // Boolean - objects with images
-        ];
-        
-        const stringParams = [
-            'q',              // Search term
-            'medium',         // String - medium type (can use | separator)
-            'geoLocation'     // String - geographic location (can use | separator)
-        ];
-        
-        const numberParams = [
-            'departmentId',   // Integer - specific department
-            'dateBegin',      // Integer - start date range
-            'dateEnd'         // Integer - end date range
-        ];
-        
+        // Build query string from allowed search parameters
+        const allowedParams = ['ids', 'limit', 'page', 'fields', 'include', 'q', 'query', 'sort', 'from', 'size', 'facets'];
         const queryParams = new URLSearchParams();
         
-        // Handle boolean parameters
-        booleanParams.forEach(param => {
-            const value = searchParams.get(param);
-            if (value !== null) {
-                // Convert string "true"/"false" to actual boolean
-                const boolValue = value.toLowerCase() === 'true' || value === '1';
-                queryParams.append(param, boolValue.toString());
-            }
-        });
-        
-        // Handle string parameters
-        stringParams.forEach(param => {
+        allowedParams.forEach(param => {
             const value = searchParams.get(param);
             if (value) {
                 queryParams.append(param, value);
             }
         });
         
-        // Handle number parameters
-        numberParams.forEach(param => {
-            const value = searchParams.get(param);
-            if (value && !isNaN(value)) {
-                queryParams.append(param, value);
-            }
-        });
-        
-        // Ensure we have at least a search query
-        if (!queryParams.has('q')) {
-            return new Response(
-                JSON.stringify({ 
-                    error: 'Search query (q) is required',
-                    usage: 'Use ?q=searchterm along with optional filters'
-                }), 
-                { 
-                    status: 400,
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
-        }
-        
         // Construct the full API URL with query parameters
-        const apiUrl = `${MET_SEARCH_API}?${queryParams.toString()}`;
+        const apiUrl = queryParams.toString() 
+            ? `${CHICAGO_SEARCH_API}?${queryParams.toString()}`
+            : CHICAGO_SEARCH_API;
 
         const response = await fetch(apiUrl, {
+            headers: {
+                Authorization: `Bearer ${process.env.API_TOKEN}`
+            },
+        });
+        
+        const data = await response.json();
+        const transformed = {
+            ...data,
+            source: 'proxied-through-nextjs'
+        };
+
+        return new Response(JSON.stringify(transformed), {
             headers: {
                 'Content-Type': 'application/json'
             },
         });
-        
-        if (!response.ok) {
-            throw new Error(`Met API error: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        return NextResponse.json(data);
     } catch (reason) {
         const message = reason instanceof Error ? reason.message : 'Unexpected error';
         
-        return NextResponse.json({ 
-                error: message,
-                timestamp: new Date().toISOString(),
-                status: 500,
-            },
-        );
+        return new Response(message, { status: 500 });
     }
 }

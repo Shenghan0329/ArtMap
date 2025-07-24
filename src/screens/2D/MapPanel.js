@@ -7,13 +7,14 @@ import { smallMapDetailsQuery, smallMapDetailsFields } from "@/constants/google_
 import { usePlace } from "@/hooks/placeHooks";
 
 import { regionQuery } from "@/constants/google_map_queries";
-import { stateQuery } from "@/constants/google_map_queries";
 import RandomSelector from "@/common/RandomSelector";
 import getState from "@/common/getState";
 import { ErrorContext } from "@/app/page";
 
+import { getArtworkById, getArtworksByQuery } from "@/api/api";
+
 const MIN_SIZE = 36;
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 6;
 const MAX_SIZE = 36;
 const REGION_TYPES = ['local', 'county','state'];
 
@@ -84,7 +85,7 @@ const MapPanel = ({place, isSmall=false}) => {
     }, [isLoading, isEnd]);
 
     useEffect(() => {
-        console.log("init");
+        console.log("Init map panel");
         // Reset Everything upon place change
         setArtworks([]);
         setToQuery(true);
@@ -102,7 +103,7 @@ const MapPanel = ({place, isSmall=false}) => {
         });
         if (!map || !placesLib) return;
         if (place) {
-            console.log(place);
+            console.log("Place: " + place);
             let local = '';
             let county = '';
             let state = '';
@@ -123,7 +124,6 @@ const MapPanel = ({place, isSmall=false}) => {
                     setError('STATE_NOT_FOUND');
                 }
             });
-            console.log(county);
             // Search for state
             if (place?.vicinity) {
                 const st = getState(place.vicinity);
@@ -134,23 +134,19 @@ const MapPanel = ({place, isSmall=false}) => {
     }, [map, placesLib, place]);
 
     useEffect(() => {
-        console.log(currRegion);
+        console.log("CurrRegion: ", currRegion);
         async function fetchIDsAll() {
             const newIds = {...ids};
             for (let region of REGION_TYPES){
                 const location = currRegion[region];
                 if (!location) continue;
-                console.log(`/api/artworks/search?isHighlight=true&q=${location}`);
-                const res = await fetch(`/api/artworks/search?isHighlight=true&q=${location}`);
-                const artworks = await res.json();
+                const artworks = await getArtworksByQuery(`q=${location}&limit=${MAX_SIZE}`);
                 if (artworks?.error) {
-                    setError('MET_API_LIMIT');
+                    setError(artworks?.error + ': ' + artworks?.detail);
                     newIds[region] = [];
-                    setTimeout(fetchIDsAll, 30000);
-                    break;
+                    continue;
                 }
-                let artworkIds = [];
-                if (artworks?.objectIDs) artworkIds.push(...artworks?.objectIDs.slice(0, MAX_SIZE));
+                const artworkIds = artworks.map((artwork, idx) => artwork?.id);
                 newIds[region] = artworkIds;
             }
             setIds(newIds);
@@ -204,28 +200,21 @@ const MapPanel = ({place, isSmall=false}) => {
                     }
                     // Get Artwork from id
                     for (let i = 0; i < selectedIds.length; i++) {
-                        const id = selectedIds[i];
-                        const res = await fetch(`/api/artworks/${id}`);
-                        const artwork = await res.json();
+                        const currId = selectedIds[i];
+                        if (!currId) continue;
+                        const artwork = await getArtworkById(currId);
                         if (artwork?.error) {
-                            setError('MET_API_LIMIT');
-                            console.log("Error");
+                            setError(artworks?.error + ': ' + artworks?.detail);
                             setToQuery(prev => false);
                             setIsLoading(false);
-                            rs.reset([id]);
-                            return;
-                        }
-                        if (artwork?.primaryImageSmall) {
-                            aws.push(artwork);
-                            artworksLeft -= 1;
-                            console.log(selectedIds, artworksLeft);
-                        } else {
                             continue;
                         }
+                        aws.push(artwork);
+                        artworksLeft -= 1;
                     }
                 }
                 setArtworks(prev => [...prev,...aws]);
-                console.log(artworks);
+                console.log('Artworks: ', artworks);
                 setIsLoading(false);
             }
             fetchArtworks(ids);
@@ -235,32 +224,37 @@ const MapPanel = ({place, isSmall=false}) => {
     
     return (
     <div className="border border-gray-200 w-full">
-        {!isSmall && (
-            <div className="flex flex-row p-2">
-                <TimeLine time={time} setTime={setTime}/>
-                <button className="text-gray-500 text-xs" onClick={() => {setToQuery(true)}}>Reload</button>
-            </div>
-        )}
+        
+        <div className="flex flex-row p-2">
+            {!isSmall && (<TimeLine time={time} setTime={setTime}/>)}
+            <button className="text-gray-500 text-xs" onClick={() => {setToQuery(true)}}>Reload</button>
+        </div>
+        
         <div className="mb-2 m-2">Year: {time}</div>
         <div className="mb-2 m-2">About {place.name}</div>
         <div ref={containerRef} className="overflow-y-auto h-96 flex flex-row flex-wrap gap-2">
             {artworks.map((item, index) => {
                 
                 return (
-                    <div 
-                        className="relative w-full lg:w-[calc(50%-0.25rem)] aspect-square bg-gray-100 overflow-hidden" 
-                        key={index}
-                    >
-                        <Image
-                            className="dark:invert w-full h-auto"
-                            src={item?.primaryImageSmall}
-                            alt={item?.title}
-                            fill={true}
-                            sizes='500px'
-                            blurDataURL="/sample-img.jpg"
-                            placeholder="blur"
-                            priority
+                    <div                          
+                        className="relative w-full lg:w-[calc(50%-0.25rem)] aspect-square bg-gray-100 overflow-hidden"                          
+                        key={index}                     
+                    >                         
+                        <Image                             
+                            className="dark:invert w-full h-auto"                             
+                            src={item?.primaryImageLarge}                             
+                            alt={item?.thumbnail?.alt_text}                             
+                            fill={true}                             
+                            sizes='500px'                             
+                            blurDataURL="/sample-img.jpg"                             
+                            placeholder="blur"                             
+                            priority                         
                         />
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        <div className="absolute bottom-2 right-2 text-white text-sm text-right">
+                            <div className="font-bold">{item?.title}</div>
+                            <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
+                        </div>                     
                     </div>
                 )
             })}

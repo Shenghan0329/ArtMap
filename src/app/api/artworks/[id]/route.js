@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const MET_OBJECT_API = 'https://collectionapi.metmuseum.org/public/collection/v1/objects'
+const CHICAGO_OBJECT_API = 'https://api.artic.edu/api/v1/artworks'
 
 // {
 //     objectID: 655752,
@@ -95,10 +95,9 @@ export async function GET(request, { params }) {
     try {
         // Extract the object ID from the route parameters
         const { id } = await params;
-        const objectId = id;
         
         // Validate that we have an object ID
-        if (!objectId) {
+        if (!id) {
             return new Response(
                 JSON.stringify({ error: 'Object ID is required' }), 
                 { 
@@ -109,7 +108,7 @@ export async function GET(request, { params }) {
         }
         
         // Construct the full API URL with the object ID
-        const apiUrl = `${MET_OBJECT_API}/${objectId}`;
+        const apiUrl = `${CHICAGO_OBJECT_API}/${id}`;
 
         const response = await fetch(apiUrl, {
             // Note: Met API doesn't require authentication
