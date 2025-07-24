@@ -5,9 +5,6 @@ import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-googl
 import { ErrorContext } from "@/app/page";
 import { useLocationInit } from "@/hooks/mapHooks";
 
-import SmallMapPanel from "./SmallMapPanel/SmallMapPanel";  
-import LargeMapPanel from "./LargeMapPanel/LargeMapPanel";
-
 import ZoomButtons from "@/components/Buttons/ZoomButtons";
 import SwitchButton from "@/components/Buttons/SwitchButton";
 import LeftPanel from "@/components/LeftPanel/LeftPanel";
@@ -18,6 +15,7 @@ import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
+import MapPanel from "./MapPanel";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
@@ -161,6 +159,8 @@ const TwoDimensionalMap = () => {
     }, [zoom])
 
     useEffect(() => {
+        setPanelObject({});
+        setVisible(false);
         if (isSmall) {
             setQueryText(smallMapQuery);
         } else {
@@ -269,9 +269,7 @@ const TwoDimensionalMap = () => {
                 disabled={!loadingEnabled}
             >Load More</button>
             <LeftPanel visible={visible} setVisible={setVisible} transparent={isSmall && !is2D}>
-                {isSmall ? 
-                    (is2D ? <SmallMapPanel place={panelObject} /> : <StreetViewPanel artwork={artwork} /> ): 
-                    <LargeMapPanel place={panelObject} />}
+                    {is2D ? <MapPanel place={panelObject} isSmall={isSmall} /> : <StreetViewPanel artwork={artwork} />}
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}

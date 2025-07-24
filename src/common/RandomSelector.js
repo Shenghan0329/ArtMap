@@ -47,8 +47,8 @@ export default class RandomSelector {
     reset(newArray) {
         if (newArray && Array.isArray(newArray)) {
             // Replace with new array
-            this.originalArray = [...newArray];
-            this.availableElements = [...newArray];
+            this.originalArray = [...this.originalArray, ...newArray];
+            this.availableElements = [...this.availableElements, ...newArray];
         } else {
             // Reset to original array, making all elements selectable again
             this.availableElements = [...this.originalArray];

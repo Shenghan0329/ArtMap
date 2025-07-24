@@ -9,12 +9,12 @@ const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', transparent = fals
                 visible ? 'translate-x-0' : '-translate-x-full'}`}
             style = {{
                 opacity: transparent? 0.5 : 1,
-                backgroundColor: transparent ? 'black' : 'white'
+                backgroundColor: transparent ? 'black' : 'white',
             }}
         >
 
             {/* Panel content */}
-            <div className={`p-6 pt-10 pb-10 h-full overflow-y-auto`}>
+            <div className={`pt-10 pb-10 h-full`}>
                 {children}
                 <div className="top-2 right-2 absolute">
                     <CloseButton onClick={async () => {

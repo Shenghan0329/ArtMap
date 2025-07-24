@@ -63,5 +63,5 @@ const STATE_LIST = {
 export default function getState(address) {
     address = address.toUpperCase();
     const word = address.slice(-2);
-    return STATE_LIST[word];
+    return word in STATE_LIST ? STATE_LIST[word] : '';
 }

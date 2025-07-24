@@ -94,7 +94,8 @@ const MET_OBJECT_API = 'https://collectionapi.metmuseum.org/public/collection/v1
 export async function GET(request, { params }) {
     try {
         // Extract the object ID from the route parameters
-        const objectId = params.id;
+        const { id } = await params;
+        const objectId = id;
         
         // Validate that we have an object ID
         if (!objectId) {
