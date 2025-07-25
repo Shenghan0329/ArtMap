@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import ArtworkImage from "../ArtworkImage/ArtworkImage";
 
 const ArtworkDisplay = ({ artwork, setDetails }) => {
     if (!artwork) {
@@ -59,25 +59,16 @@ const ArtworkDisplay = ({ artwork, setDetails }) => {
             {/* Image Section */}
             <div className={`relative h-[60vh] ${imageWidth} min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
                 {imageUrl ? (
-                <Image
-                    src={primaryImageLarge}
-                    alt={thumbnail?.alt_text || title || 'Artwork'}
-                    fill
-                    className="w-full h-auto object-cover"
-                    blurDataURL="/sample-img.jpg"
-                    placeholder="blur"   
-                    sizes="(max-width: 768px) 100vw, 67vw"
-                    priority
-                />
+                    <ArtworkImage artwork={artwork} defaultImage={'primaryImageLarge'} altImage={['primaryImageMedium', 'primaryImageSmall']} />
                 ) : (
-                <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-gray-400">
-                    <svg className="mx-auto h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p>Image not available</p>
+                    <div className="flex items-center justify-center h-full">
+                        <div className="text-center text-gray-400">
+                        <svg className="mx-auto h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p>Image not available</p>
+                        </div>
                     </div>
-                </div>
                 )}
             </div>
 
