@@ -1,50 +1,31 @@
-import { useState, useEffect, useMemo, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
+
+import { ErrorContext } from "@/app/page";
 
 import Image from "next/image";
 import TimeLine from "@/components/TimeLine/TimeLine";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { smallMapDetailsQuery, smallMapDetailsFields } from "@/constants/google_map_queries";
 import { usePlace } from "@/hooks/placeHooks";
+import { useArtworks } from "@/hooks/artworkHooks";
 
-import { regionQuery } from "@/constants/google_map_queries";
-import RandomSelector from "@/common/RandomSelector";
-import getState from "@/common/getState";
-import { ErrorContext } from "@/app/page";
-
-import { getArtworkById, getArtworksByQuery } from "@/api/api";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
-
-const MIN_SIZE = 36;
-const PAGE_SIZE = 6;
-const MAX_SIZE = 96;
-const REGION_TYPES = ['local', 'county','state'];
 
 const MapPanel = ({place, isSmall=false}) => {
     const map = useMap();
     const placesLib = useMapsLibrary('places');
+    const { error, setError } = useContext(ErrorContext);
 
     const [time, setTime] = useState(2025);
     const [details, setDetails] = useState(false);
-    const [selectedArtwork, setSelectedArtwork] = useState({});
-    const [currRegion, setCurrRegion] = useState({
-        local: null,
-        county: null,
-        state: null
-    });
-    const [currGallary, setCurrGallary] = useState(0);
-    const [ids, setIds] = useState({
-        local: [],
-        county: [],
-        state: []
-    });
-    const [artworks, setArtworks] = useState([]);
     const [toQuery, setToQuery] = useState(true);
-    const [selectorInit, setSelectorInit] = useState(true);
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const containerRef = useRef(null);
 
-    const { error, setError } = useContext(ErrorContext);
+    const artworks = useArtworks(map, placesLib, place, toQuery, setToQuery, setIsLoading, setIsEnd, setError);
+    const [selectedArtwork, setSelectedArtwork] = useState({});
+
+    const containerRef = useRef(null);
 
     const detailedPlace = usePlace(place, map, placesLib, smallMapDetailsQuery);
 
@@ -87,143 +68,7 @@ const MapPanel = ({place, isSmall=false}) => {
         };
     }, [isLoading, isEnd]);
 
-    useEffect(() => {
-        console.log("Init map panel");
-        // Reset Everything upon place change
-        setArtworks([]);
-        setToQuery(true);
-        setIsEnd(false);
-        setIsLoading(false);
-        setIds({
-            local: [],
-            county: [],
-            state: []
-        });
-        setCurrRegion({
-            local: null,
-            county: null,
-            state: null
-        });
-        if (!map || !placesLib) return;
-        if (place) {
-            console.log("Place: " + place);
-            let local = '';
-            let county = '';
-            let state = '';
-            // Search for local
-            if (place?.name) {
-                local = place.name;
-            }
-            const bounds = map.getBounds();
-            const svc = new placesLib.PlacesService(map);
-            // Search for county
-            svc.nearbySearch({
-                'bounds': bounds,
-                ...regionQuery, 
-            }, (res, status, pagination) => {
-                if (status == 'OK' && res.length > 0) {
-                    county = res[0].name;
-                } else {
-                    setError('STATE_NOT_FOUND');
-                }
-            });
-            // Search for state
-            if (place?.vicinity) {
-                const st = getState(place.vicinity);
-                state = st;
-            }
-            setCurrRegion({local, county, state});
-        }
-    }, [map, placesLib, place]);
-
-    useEffect(() => {
-        console.log("CurrRegion: ", currRegion);
-        async function fetchIDsAll() {
-            const newIds = {...ids};
-            for (let region of REGION_TYPES){
-                const location = currRegion[region];
-                if (!location) continue;
-                const artworks = await getArtworksByQuery(`q=${location}&limit=${MAX_SIZE}`);
-                if (artworks?.error) {
-                    setError(artworks?.error + ': ' + artworks?.detail);
-                    newIds[region] = [];
-                    continue;
-                }
-                const artworkIds = artworks.map((artwork, idx) => artwork?.id);
-                newIds[region] = artworkIds;
-            }
-            setIds(newIds);
-        }
-        fetchIDsAll();
-    }, [currRegion]);
-
-    const rs = useMemo(() => {
-        // if (selectorInit) return;
-        console.log("Selector Init: ", ids);
-        if (ids?.local?.length) {
-            setCurrGallary(0);
-            setToQuery(true);
-            return new RandomSelector(ids.local);
-        }
-        if (ids?.county?.length) {
-            setCurrGallary(1);
-            setToQuery(true);
-            return new RandomSelector(ids.county);
-        }
-        if (ids?.state?.length) {
-            setCurrGallary(2);
-            setToQuery(true);
-            return new RandomSelector(ids.state);
-        }
-        return null;
-    }, [ids]);
     
-    useEffect(() => {
-        if (!ids) return;
-        if (rs && toQuery) {
-            setIsLoading(true);
-            const fetchArtworks = async (ids) => {
-                let artworksLeft = PAGE_SIZE;
-                const aws = [];
-                let cg = currGallary;
-                while (artworksLeft > 0) {
-                    const selectedIds = rs.select(1);
-                    // Current selector is empty
-                    if (selectedIds.length === 0) {
-                        // Run out of artworks
-                        if (cg === 2) {
-                            setIsEnd(true);
-                            break; 
-                        }
-                        // Find artworks in next level of region
-                        rs.reset(ids[REGION_TYPES[currGallary + 1]]);
-                        setCurrGallary(prev => prev + 1);
-                        cg += 1;
-                        continue;
-                    }
-                    // Get Artwork from id
-                    for (let i = 0; i < selectedIds.length; i++) {
-                        const currId = selectedIds[i];
-                        if (!currId) continue;
-                        const artwork = await getArtworkById(currId);
-                        if (artwork?.error) {
-                            setError(artworks?.error + ': ' + artworks?.detail);
-                            setToQuery(prev => false);
-                            setIsLoading(false);
-                            continue;
-                        }
-                        aws.push(artwork);
-                        artworksLeft -= 1;
-                    }
-                }
-                setArtworks(prev => [...prev,...aws]);
-                console.log('Artworks: ', artworks);
-                setIsLoading(false);
-            }
-            fetchArtworks(ids);
-            setToQuery(false);
-        }
-    }, [toQuery, rs]);
     
     return (<>
         {details ? 
@@ -258,7 +103,7 @@ const MapPanel = ({place, isSmall=false}) => {
                                     fill={true}                             
                                     sizes='500px'                             
                                     blurDataURL="/sample-img.jpg"                             
-                                    placeholder="blur"                             
+                                    placeholder="blur"                            
                                     priority                         
                                 />
                                 <div className="absolute inset-0 bg-black/10"></div>
