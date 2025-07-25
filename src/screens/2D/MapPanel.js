@@ -2,7 +2,6 @@ import { useState, useEffect, useContext, useRef } from "react";
 
 import { ErrorContext } from "@/app/page";
 
-import Image from "next/image";
 import TimeLine from "@/components/TimeLine/TimeLine";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { smallMapDetailsQuery, smallMapDetailsFields } from "@/constants/google_map_queries";
@@ -10,6 +9,7 @@ import { usePlace } from "@/hooks/placeHooks";
 import { useArtworks } from "@/hooks/artworkHooks";
 
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
+import ArtworkImage from "@/components/ArtworkImage/ArtworkImage";
 
 const MapPanel = ({place, isSmall=false}) => {
     const map = useMap();
@@ -90,22 +90,13 @@ const MapPanel = ({place, isSmall=false}) => {
                         return (
                             <div                          
                                 className="relative w-full lg:w-[calc(50%-0.25rem)] aspect-square bg-gray-100 overflow-hidden"                          
-                                key={index}
+                                key={item?.title + index}
                                 onClick={() => {
                                     setSelectedArtwork(item);
                                     setDetails(true);
                                 }}                     
                             >                         
-                                <Image                             
-                                    className="dark:invert w-full h-full object-cover"                             
-                                    src={item?.primaryImageMedium}                             
-                                    alt={item?.thumbnail?.alt_text || item?.title || 'Artwork'}                             
-                                    fill={true}                             
-                                    sizes='500px'                             
-                                    blurDataURL="/sample-img.jpg"                             
-                                    placeholder="blur"                            
-                                    priority                         
-                                />
+                                <ArtworkImage artwork={item} />
                                 <div className="absolute inset-0 bg-black/10"></div>
                                 <div className="absolute bottom-2 right-2 text-white text-sm text-right">
                                     <div className="font-bold">{item?.title}</div>
