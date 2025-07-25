@@ -12,23 +12,38 @@ const GOLDENRATIO = 1.61803398875
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
 
-export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', pov, showFog = false }) => {
+export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => {
   const map = useMap()
   const [cameraData, setCameraData] = useState(null)
+  const [initialCameraConfig, setInitialCameraConfig] = useState({
+    fov: 90,
+    position: [0, 0, 0],
+    rotation: [0, 0, 0]
+  })
   
-  // Calculate camera position and rotation directly from pov
-  const cameraConfig = useMemo(() => {
-    const heading = -pov.heading * Math.PI / 180
-    const pitch = pov.pitch * Math.PI / 180
-    pov.zoom = Math.min(Math.max(pov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM);
-    const fov = 180 / Math.pow(2,pov.zoom);
-    
-    return {
-      fov: fov,
-      position: [0, 0, 0],
-      rotation: [pitch, heading, 0]
+  // Get initial POV for camera setup
+  useEffect(() => {
+    if (map) {
+      const streetView = map.getStreetView()
+      if (streetView) {
+        try {
+          const pov = streetView.getPov()
+          const heading = -pov.heading * Math.PI / 180
+          const pitch = pov.pitch * Math.PI / 180
+          const clampedZoom = Math.min(Math.max(pov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM)
+          const fov = 180 / Math.pow(2, clampedZoom)
+          
+          setInitialCameraConfig({
+            fov: fov,
+            position: [0, 0, 0],
+            rotation: [pitch, heading, 0]
+          })
+        } catch (error) {
+          console.warn('Could not get initial POV:', error)
+        }
+      }
     }
-  }, [pov.heading, pov.pitch, pov.zoom])
+  }, [map])
   
   return (
     <div style={{ 
@@ -44,7 +59,7 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
     }}>
       <Canvas 
         dpr={[1, 1.5]} 
-        camera={cameraConfig}
+        camera={initialCameraConfig}
         style={{ width: '100vw', height:'100vh', pointerEvents: 'none' }}
         gl={{ alpha: true }}
         onPointerMissed={(e)=>{
@@ -86,7 +101,7 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
         <Environment preset="city" />
         
         {/* Camera controller component */}
-        <CameraController pov={pov} />
+        <CameraController map={map} />
         
         {/* Data provider for external overlay */}
         <CameraDataProvider onUpdate={setCameraData} />
@@ -104,21 +119,46 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
 }
 
 // Component to handle camera updates within the Canvas
-function CameraController({ pov }) {
+function CameraController({ map }) {
   const { camera } = useThree()
+  const lastPovRef = useRef(null)
   
-  useEffect(() => {
-    const heading = -1 * pov.heading * Math.PI / 180
-    const pitch = 1 * pov.pitch * Math.PI / 180
-    const fov = 180 / Math.pow(2, pov.zoom)
+  useFrame(() => {
+    if (!map) return
     
-    // Update camera rotation
-    camera.rotation.set(pitch, heading, 0)
-    
-    // Update camera FOV
-    camera.fov = fov
-    camera.updateProjectionMatrix()
-  }, [camera, pov.heading, pov.pitch, pov.zoom])
+    try {
+      const streetView = map.getStreetView()
+      if (!streetView) return
+      
+      const currentPov = streetView.getPov()
+      
+      // Only update if POV has actually changed to avoid unnecessary calculations
+      const lastPov = lastPovRef.current
+      if (lastPov && 
+          Math.abs(lastPov.heading - currentPov.heading) < 0.001 &&
+          Math.abs(lastPov.pitch - currentPov.pitch) < 0.001 &&
+          Math.abs(lastPov.zoom - currentPov.zoom) < 0.001) {
+        return
+      }
+      
+      lastPovRef.current = { ...currentPov }
+      
+      const heading = -1 * currentPov.heading * Math.PI / 180
+      const pitch = 1 * currentPov.pitch * Math.PI / 180
+      const clampedZoom = Math.min(Math.max(currentPov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM)
+      const fov = 180 / Math.pow(2, clampedZoom)
+      
+      // Update camera rotation
+      camera.rotation.set(pitch, heading, 0)
+      
+      // Update camera FOV
+      camera.fov = fov
+      camera.updateProjectionMatrix()
+    } catch (error) {
+      // Silently handle cases where street view is not ready
+      // console.warn('Could not get POV in frame:', error)
+    }
+  })
   
   return null
 }
