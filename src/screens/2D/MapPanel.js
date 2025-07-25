@@ -12,6 +12,7 @@ import getState from "@/common/getState";
 import { ErrorContext } from "@/app/page";
 
 import { getArtworkById, getArtworksByQuery } from "@/api/api";
+import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 
 const MIN_SIZE = 36;
 const PAGE_SIZE = 6;
@@ -23,6 +24,8 @@ const MapPanel = ({place, isSmall=false}) => {
     const placesLib = useMapsLibrary('places');
 
     const [time, setTime] = useState(2025);
+    const [details, setDetails] = useState(false);
+    const [selectedArtwork, setSelectedArtwork] = useState({});
     const [currRegion, setCurrRegion] = useState({
         local: null,
         county: null,
@@ -222,54 +225,64 @@ const MapPanel = ({place, isSmall=false}) => {
         }
     }, [toQuery, rs]);
     
-    return (
-    <div className="border border-gray-200 w-full">
-        
-        <div className="flex flex-row p-2">
-            {!isSmall && (<TimeLine time={time} setTime={setTime}/>)}
-            <button className="text-gray-500 text-xs" onClick={() => {setToQuery(true)}}>Reload</button>
-        </div>
-        
-        <div className="mb-2 m-2">Year: {time}</div>
-        <div className="mb-2 m-2">About {place.name}</div>
-        <div ref={containerRef} className="overflow-y-auto h-96 flex flex-row flex-wrap gap-2">
-            {artworks.map((item, index) => {
-                
-                return (
-                    <div                          
-                        className="relative w-full lg:w-[calc(50%-0.25rem)] aspect-square bg-gray-100 overflow-hidden"                          
-                        key={index}                     
-                    >                         
-                        <Image                             
-                            className="dark:invert w-full h-auto"                             
-                            src={item?.primaryImageLarge}                             
-                            alt={item?.thumbnail?.alt_text}                             
-                            fill={true}                             
-                            sizes='500px'                             
-                            blurDataURL="/sample-img.jpg"                             
-                            placeholder="blur"                             
-                            priority                         
-                        />
-                        <div className="absolute inset-0 bg-black/10"></div>
-                        <div className="absolute bottom-2 right-2 text-white text-sm text-right">
-                            <div className="font-bold">{item?.title}</div>
-                            <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
-                        </div>                     
+    return (<>
+        {details ? 
+            (<ArtworkDisplay artwork={selectedArtwork} setDetails={setDetails}/>)
+        : (
+            <div className="border border-gray-200 w-[33vw] max-[768px]:w-[100vw] h-screen">
+                <div ref={containerRef} className="overflow-y-auto overflow-x-hidden w-full h-[20vh] flex flex-col">
+                    <div className="flex flex-row p-2">
+                        {!isSmall && (<TimeLine time={time} setTime={setTime}/>)}
+                        <button className="text-gray-500 text-xs" onClick={() => {setToQuery(true)}}>Reload</button>
                     </div>
-                )
-            })}
-        </div>
-        {isLoading && (
-            <div className="flex justify-center py-4">
-                <div className="text-gray-500">Loading more artworks...</div>
+                    
+                    <div className="mb-2 m-2">Year: {time}</div>
+                    <div className="mb-2 m-2">About {place.name}</div>
+                </div>
+                <div ref={containerRef} className="overflow-y-auto h-[70vh] flex flex-row flex-wrap gap-2">
+                    {artworks.map((item, index) => {
+                        
+                        return (
+                            <div                          
+                                className="relative w-full lg:w-[calc(50%-0.25rem)] aspect-square bg-gray-100 overflow-hidden"                          
+                                key={index}
+                                onClick={() => {
+                                    setSelectedArtwork(item);
+                                    setDetails(true);
+                                }}                     
+                            >                         
+                                <Image                             
+                                    className="dark:invert w-full h-full object-cover"                             
+                                    src={item?.primaryImageLarge}                             
+                                    alt={item?.thumbnail?.alt_text || item?.title || 'Artwork'}                             
+                                    fill={true}                             
+                                    sizes='500px'                             
+                                    blurDataURL="/sample-img.jpg"                             
+                                    placeholder="blur"                             
+                                    priority                         
+                                />
+                                <div className="absolute inset-0 bg-black/10"></div>
+                                <div className="absolute bottom-2 right-2 text-white text-sm text-right">
+                                    <div className="font-bold">{item?.title}</div>
+                                    <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
+                                </div>                     
+                            </div>
+                        )
+                    })}
+                </div>
+                {isLoading && (
+                    <div className="flex justify-center py-4">
+                        <div className="text-gray-500">Loading more artworks...</div>
+                    </div>
+                )}
+                {isEnd && (
+                    <div className="flex justify-center py-4">
+                        <div className="text-gray-500">No more artworks to load</div>
+                    </div>
+                )}
             </div>
         )}
-        {isEnd && (
-            <div className="flex justify-center py-4">
-                <div className="text-gray-500">No more artworks to load</div>
-            </div>
-        )}
-    </div>);
+    </>);
 }
 
 export default MapPanel;

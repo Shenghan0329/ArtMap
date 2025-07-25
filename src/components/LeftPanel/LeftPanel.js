@@ -2,7 +2,7 @@
 
 import CloseButton from "../Buttons/CloseButton";
 
-const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', transparent = false, children }) => {
+const LeftPanel = ({ visible, setVisible, widthRatio='w-auto', transparent = false, children }) => {
     return (
         <div
             className={`fixed top-0 left-0 ${widthRatio} h-full bg-white shadow-lg z-5 transform transition-transform duration-300 ease-in-out ${
@@ -14,7 +14,7 @@ const LeftPanel = ({ visible, setVisible, widthRatio='w-1/3', transparent = fals
         >
 
             {/* Panel content */}
-            <div className={`pt-10 pb-10 h-full`}>
+            <div className={`h-full`}>
                 {children}
                 <div className="top-2 right-2 absolute">
                     <CloseButton onClick={async () => {
