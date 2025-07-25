@@ -1,12 +1,24 @@
-import { CHICAGO_API, CHICAGO_IMAGE_API, CHICAGO_SEARCH_API, FULL_SIZE } from "@/constants/api_endpoints";
+import { CHICAGO_API, CHICAGO_IMAGE_API, CHICAGO_SEARCH_API, FULL_SIZE, MED_SIZE, SM_SIZE } from "@/constants/api_endpoints";
+
+const sampleImage = '/sample-img.jpg';
 
 const getArtworkById = async (id) => {
     const res = await fetch(`${CHICAGO_API}/${id}`);
     const response = await res.json();
     if (response?.data) {
-        const primaryImageLarge = getImageById(response.data.image_id);
-        console.log(primaryImageLarge);
-        return {...response.data, primaryImageLarge};
+        const altImageId = response.data.alt_image_ids?.length ? response.data.alt_image_ids[0] : null;
+        const imageId = response.data.image_id ? response.data.image_id : altImageId;
+        if (imageId) {
+            const primaryImageLarge = getImageById(imageId, 'lg');
+            const primaryImageMedium = getImageById(imageId, 'md');
+            const primaryImageSmall = getImageById(imageId, 'sm');
+            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall};
+        } else {
+            const primaryImageLarge = sampleImage;
+            const primaryImageMedium = sampleImage;
+            const primaryImageSmall = sampleImage;
+            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall};
+        }
     } else {
         return response;
     }
@@ -18,8 +30,10 @@ const getArtworksByQuery = async (query) => {
     return (response?.data) ? response.data : response;
 }
 
-const getImageById = (imageId, large=true) => {
-    const url = `${CHICAGO_IMAGE_API}/${imageId}${FULL_SIZE}`;
+const getImageById = (imageId, s='md') => {
+    const sizes = {'sm': SM_SIZE, 'md': MED_SIZE, 'lg': FULL_SIZE}
+    const size = sizes[s] ? sizes[s] : MED_SIZE;
+    const url = `${CHICAGO_IMAGE_API}/${imageId}${size}`;
     return url;
 }
 

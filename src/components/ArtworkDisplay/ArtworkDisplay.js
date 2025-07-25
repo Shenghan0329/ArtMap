@@ -22,7 +22,8 @@ const ArtworkDisplay = ({ artwork, setDetails }) => {
         credit_line,
         thumbnail,
         image_id,
-        main_reference_number
+        main_reference_number,
+        primaryImageLarge
     } = artwork;
 
     // Construct full image URL from image_id
@@ -59,10 +60,12 @@ const ArtworkDisplay = ({ artwork, setDetails }) => {
             <div className={`relative h-[60vh] ${imageWidth} min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
                 {imageUrl ? (
                 <Image
-                    src={imageUrl}
+                    src={primaryImageLarge}
                     alt={thumbnail?.alt_text || title || 'Artwork'}
                     fill
                     className="w-full h-auto object-cover"
+                    blurDataURL="/sample-img.jpg"
+                    placeholder="blur"   
                     sizes="(max-width: 768px) 100vw, 67vw"
                     priority
                 />

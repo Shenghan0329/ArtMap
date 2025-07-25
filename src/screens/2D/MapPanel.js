@@ -16,7 +16,7 @@ import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 
 const MIN_SIZE = 36;
 const PAGE_SIZE = 6;
-const MAX_SIZE = 36;
+const MAX_SIZE = 96;
 const REGION_TYPES = ['local', 'county','state'];
 
 const MapPanel = ({place, isSmall=false}) => {
@@ -253,7 +253,7 @@ const MapPanel = ({place, isSmall=false}) => {
                             >                         
                                 <Image                             
                                     className="dark:invert w-full h-full object-cover"                             
-                                    src={item?.primaryImageLarge}                             
+                                    src={item?.primaryImageMedium}                             
                                     alt={item?.thumbnail?.alt_text || item?.title || 'Artwork'}                             
                                     fill={true}                             
                                     sizes='500px'                             
