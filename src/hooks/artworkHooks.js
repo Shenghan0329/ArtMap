@@ -22,7 +22,7 @@ export function useArtworks(
     map, placesLib, place, 
     toQuery, setToQuery, 
     setIsLoading, setIsEnd, setError, 
-    PAGE_SIZE = 6,
+    PAGE_SIZE = 6, limitSize = false, size = 3
 ) {
     const [artworks, setArtworks] = useState([]);
 
@@ -169,8 +169,17 @@ export function useArtworks(
                         artworksLeft -= 1;
                     }
                 }
-                setArtworks(prev => [...prev,...aws]);
-                console.log('Artworks: ', artworks);
+                if (limitSize) {
+                    const newLength = artworks.length + aws.length;
+                    if (size < newLength) {
+                        setArtworks(prev => [...prev,...aws].slice(newLength - size, newLength));
+                    } else {
+                        setArtworks(prev => [...prev,...aws]);
+                    }
+                } else {
+                    setArtworks(prev => [...prev,...aws]);
+                }
+                console.log('Artworks: ', [...artworks, ...aws]);
                 setIsLoading(false);
             }
             fetchArtworks(ids);

@@ -5,6 +5,7 @@ import { useCursor, Image, Text, Environment, ContactShadows } from '@react-thre
 import { useRouter, useParams } from 'next/navigation'
 import { easing } from 'maath'
 import getUuid from 'uuid-by-string'
+import { useMap } from '@vis.gl/react-google-maps'
 
 const GOLDENRATIO = 1.61803398875
 
@@ -12,6 +13,7 @@ const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
 
 export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', pov, showFog = false }) => {
+  const map = useMap()
   const [cameraData, setCameraData] = useState(null)
   
   // Calculate camera position and rotation directly from pov
@@ -46,8 +48,6 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
         style={{ width: '100vw', height:'100vh', pointerEvents: 'none' }}
         gl={{ alpha: true }}
         onPointerMissed={(e)=>{
-          console.log(e.target.style);
-          
           e.target.style.pointerEvents = 'none';
         }}
         shadows
@@ -155,16 +155,16 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     <group
       ref={ref}
     >
-      {images.map((props, index) => (
-        <Frame 
-          key={getUuid(props.artwork.name)} 
+      {images.map((props, index) => {
+        return(<Frame 
+          key={getUuid(props.artwork?.title)} 
           {...props} 
           selectedId={selectedId} 
           frameWidth={frameWidth} 
           frameHeight={frameHeight}
           onClick={props.onClick}
-        />
-      ))}
+        />)
+      })}
     </group>
   )
 }
@@ -175,7 +175,7 @@ function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO,
   const [hovered, hover] = useState(false)
   const [rnd, setRnd] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const name = getUuid(artwork.name)
+  const name = getUuid(artwork?.title)
   const isActive = selectedId === name
 
   // Set random value only on client side after mount
@@ -216,7 +216,7 @@ function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO,
           <boxGeometry />
           <meshBasicMaterial toneMapped={false} fog={false} />
         </mesh>
-        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={artwork.url} />
+        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={artwork?.primaryImageLarge} />
       </mesh>
       <Text maxWidth={0.1} anchorX="left" anchorY="top" position={[0.55, GOLDENRATIO, 0]} fontSize={0.025}>
         {name.split('-').join(' ')}
@@ -263,7 +263,7 @@ function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDEN
       const positions = []
       
       images.forEach((imageProps, index) => {
-        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork.name))
+        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork?.title))
         if (frameObject) {
           try {
             // Get the frame's world matrix

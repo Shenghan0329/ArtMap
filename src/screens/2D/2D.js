@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useContext, use } from "react";
 import { useMap, useMapsLibrary, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
 import { ErrorContext } from "@/app/page";
 import { useLocationInit } from "@/hooks/mapHooks";
+import { useArtworks } from "@/hooks/artworkHooks";
 
 import ZoomButtons from "@/components/Buttons/ZoomButtons";
 import SwitchButton from "@/components/Buttons/SwitchButton";
@@ -20,9 +21,13 @@ import MapPanel from "./MapPanel";
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
 
+const IMAGE_NUMBER = 3;
+const defaultPov = {heading: 0, pitch: 0};
+
 const TwoDimensionalMap = () => {
     const {setError} = useContext(ErrorContext);
     const map = useMap();
+    
     const placesLib = useMapsLibrary('places');
 
     const locationInit = useLocationInit(map, placesLib);
@@ -30,12 +35,9 @@ const TwoDimensionalMap = () => {
 
     const [visible, setVisible] = useState(false);
     const [is2D, setIs2D] = useState(true);
-    const [zoom, setZoom] = useState(MAP_OPTIONS.defaultZoom);
-    const [pov, setPov] = useState({heading: 0, pitch: 0});
 
     const [selectedPos, setSelectedPos] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(-1);
-    const [streetView, setStreetView] = useState(null);
     const [streetViewAvailable, setStreetViewAvailable] = useState(false);
 
     const [isSmall, setIsSmall] = useState(true);
@@ -48,15 +50,35 @@ const TwoDimensionalMap = () => {
     const [panelObject, setPanelObject] = useState({});
     const [artwork, setArtwork] = useState({});
 
+    
+    const [toQuery, setToQuery] = useState(true);
+    const [isEnd, setIsEnd] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, 1, true, IMAGE_NUMBER);
+    const positions = [[0, 0, 0], [-1, 0, -3], [-2, 0, -6]];
+    const rotation = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    console.log('aaa');
+    const images = artworks.map((artwork, index) => {
+        return {
+            position: positions[index],
+            rotation: rotation[index],
+            artwork: artwork,
+            onClick: () => {
+                setArtwork(artwork);
+                setVisible(true);
+            }
+        }
+    });
+
     const handleZoomIn = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() + 1);
             else {
+                const streetView = map.getStreetView();
                 const updatedZoom = Math.min(streetView.getZoom() + 0.2, STREETVIEW_MAX_ZOOM);
                 streetView.setZoom(updatedZoom);
-                streetView.setPov({...pov, zoom: updatedZoom});
-                // console.log({...pov, zoom: updatedZoom});
-                setPov({...pov, zoom: updatedZoom});
+                streetView.setPov({...streetView.getPov(), zoom: updatedZoom});
             }
         }
     };
@@ -65,10 +87,10 @@ const TwoDimensionalMap = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() - 1);
             else {
+                const streetView = map.getStreetView();
                 const updatedZoom = Math.max(streetView.getZoom() - 0.2, STREETVIEW_MIN_ZOOM);
                 streetView.setZoom(updatedZoom);
-                streetView.setPov({...pov, zoom: updatedZoom});
-                setPov({...pov, zoom: updatedZoom});
+                streetView.setPov({...streetView.getPov(), zoom: updatedZoom});
             }
         }
     };
@@ -151,14 +173,6 @@ const TwoDimensionalMap = () => {
     }, [pinned, selectedMarker]);
 
     useEffect(() => {
-        if (zoom > 13) {
-            setIsSmall(true);
-        } else {
-            setIsSmall(false);
-        }
-    }, [zoom])
-
-    useEffect(() => {
         setPanelObject({});
         setVisible(false);
         if (isSmall) {
@@ -179,13 +193,16 @@ const TwoDimensionalMap = () => {
     }, [queryText, locationInit]);
 
     useEffect(() => {
+        if (!map) return;
+        const streetView = map.getStreetView();
         if (selectedPos !== null && streetView) {
             streetView.setPosition(selectedPos);
         }
     }, [selectedPos]);
 
     useEffect(() => {
-        if (!streetView) return; 
+        if (!map) return; 
+        const streetView = map.getStreetView();
         if (!is2D && isSmall && streetViewAvailable) {
             streetView.setVisible(true);       
         } else {
@@ -199,8 +216,14 @@ const TwoDimensionalMap = () => {
         // Set Listeners
         map.addListener('zoom_changed', () => {
             const zoom = map.getZoom();
-            setLoadingEnabled(true);
-            setZoom(zoom);
+            if (!loadingEnabled) {
+                setLoadingEnabled(true);
+            }
+            if (zoom > 13) {
+                if (!isSmall) setIsSmall(true);
+            } else {
+                if (isSmall) setIsSmall(false);
+            }
         });
         map.addListener('center_changed', () => {
             setLoadingEnabled(true);
@@ -211,10 +234,8 @@ const TwoDimensionalMap = () => {
         if (!map) return; 
         const streetView = map.getStreetView();
         streetView.setOptions(STREETVIEW_OPTIONS);
-        setStreetView(streetView);
         streetView.setZoom(0);
         const pov = streetView.getPov();
-        setPov(pov);
         streetView.addListener("position_changed", () => {
             setStreetViewAvailable(true);
         });
@@ -239,19 +260,13 @@ const TwoDimensionalMap = () => {
                 streetView.setPov(pov);
                 streetView.setZoom(pov.zoom);
             }
-            // console.log(pov);
-            setPov(pov);
         });
     }, [map]);
 
     
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
-            {!is2D && <PictureFrame3D pov={pov} images={[
-                { position: [0, 0, 0], rotation: [0, 0, 0], artwork: {name: '1', url: '/sample-img.jpg', }, onClick: () => {setArtwork({name: '1'}); setVisible(true);}},
-                { position: [-1, 0, -3], rotation: [0, 0, 0], artwork: {name: '2', url: '/sample-img.jpg',}, onClick: () => {setArtwork({name: '2'}); setVisible(true);}},
-                { position: [-2, 0, -6], rotation: [0, 0, 0], artwork: {name: '3', url: '/sample-img.jpg', }, onClick: () => {setArtwork({name: '3'}); setVisible(true);}}
-            ]}/>}
+            {!is2D && <PictureFrame3D pov={map?.streetView?.getPov() || defaultPov} images={images} />}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
                 handleZoomOut={handleZoomOut}
@@ -269,11 +284,10 @@ const TwoDimensionalMap = () => {
                 disabled={!loadingEnabled}
             >Load More</button>
             <LeftPanel visible={visible} setVisible={setVisible} transparent={isSmall && !is2D}>
-                    {is2D ? <MapPanel place={panelObject} isSmall={isSmall} /> : <StreetViewPanel artwork={artwork} />}
+                {is2D ? <MapPanel place={panelObject} isSmall={isSmall} /> : <StreetViewPanel artwork={artwork} />}
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}
-                
             </GoogleMapSelector>
         </div>
     );
