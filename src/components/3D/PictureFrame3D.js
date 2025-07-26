@@ -7,6 +7,7 @@ import { easing } from 'maath'
 import getUuid from 'uuid-by-string'
 import { useMap } from '@vis.gl/react-google-maps'
 import { generateCameraFOVTransforms } from '@/common/getRandomPositions'
+import { THREED_IMAGE_SHIFT, THREED_IMAGE_SIZE } from '@/constants/constants'
 
 const GOLDENRATIO = 1.61803398875
 
@@ -14,7 +15,7 @@ const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
 const IMAGE_NUMBER = 6;
 
-export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => {
+export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = THREED_IMAGE_SIZE, frameHeight = GOLDENRATIO * THREED_IMAGE_SIZE, backgroundColor = 'transparent', showFog = false}) => {
   const map = useMap()
   const [cameraData, setCameraData] = useState(null)
   const [initialCameraConfig, setInitialCameraConfig] = useState({
@@ -23,8 +24,6 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
     rotation: [0, 0, 0]
   })
   
-  // const positions = [[0, 0, 0], [-1, 0, -3], [-2, 0, -6]];
-    // const rotation = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
     const images = useMemo(() => {
         if (!map) return [];
         const streetView = map.getStreetView();
@@ -36,8 +35,8 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
                 rotation: transforms[index].rotation,
                 artwork: artwork,
                 onClick: () => {
-                    setArtwork(artwork);
-                    setVisible(true);
+                  setArtwork(artwork);
+                  setVisible(true);
                 }
             }
         })
@@ -49,9 +48,9 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
       if (streetView) {
         try {
           const pov = streetView.getPov()
-          console.log(pov);
           const heading = -pov.heading * Math.PI / 180
-          const pitch = pov.pitch * Math.PI / 180
+          const pitchDirection = (pov.heading > 90 +15 * THREED_IMAGE_SHIFT && currentPov.heading <= 270 + 15 * THREED_IMAGE_SHIFT) ? -1 : 1;
+          const pitch = pitchDirection * pov.pitch * Math.PI / 180
           const clampedZoom = Math.min(Math.max(pov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM)
           const fov = 180 / Math.pow(2, clampedZoom)
           
@@ -70,17 +69,19 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
   
   
   return (
-    <div style={{ 
-      width: '100vw', 
-      height: '100vh', 
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      zIndex: 1,
-      pointerEvents: 'none',
-      display: 'flex',
-      flexDirection: 'row-reverse',
-    }}>
+    <div 
+      style={{ 
+        width: '100vw', 
+        height: '100vh', 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 1,
+        pointerEvents: 'none',
+        display: 'flex',
+        flexDirection: 'row-reverse',
+      }}
+    >
       <Canvas 
         dpr={[1, 1.5]} 
         camera={initialCameraConfig}
@@ -95,9 +96,9 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
         {showFog && <fog attach="fog" args={[backgroundColor || '#191920', 0, 15]} />}
         
         {/* Add lighting for shadows */}
-        <ambientLight intensity={0.3} />
+        {/* <ambientLight intensity={0.3} />
         <directionalLight 
-          position={[0, 40, 5]} 
+          position={[0, 40, 20]} 
           intensity={0.4}
           castShadow
           shadow-mapSize={[1024, 1024]}
@@ -106,9 +107,9 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
           shadow-camera-right={10}
           shadow-camera-top={10}
           shadow-camera-bottom={-10}
-        />
+        /> */}
         
-        <group position={[0, -0.5, -5]}>
+        <group position={[0, -3, 0]}>
           <Frames 
             images={images} 
             frameWidth={frameWidth} 
@@ -116,10 +117,10 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
           />
           
           {/* Ground plane to receive shadows - angled towards audience */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
+          {/* <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
             <planeGeometry args={[20, 20]} />
             <shadowMaterial transparent opacity={0.3} />
-          </mesh>
+          </mesh> */}
           
         </group>
         <Environment preset="city" />
@@ -168,7 +169,9 @@ function CameraController({ map }) {
       lastPovRef.current = { ...currentPov }
       
       const heading = -1 * currentPov.heading * Math.PI / 180
-      const pitch = 1 * currentPov.pitch * Math.PI / 180
+      // !!! Add pitchDirection to make sure everything in front of users make sense, forget about everything behind them
+      const pitchDirection = (currentPov.heading > 90 + 10 * THREED_IMAGE_SHIFT  && currentPov.heading <= 270 + 10 * THREED_IMAGE_SHIFT ) ? -1 : 1;
+      const pitch = pitchDirection * currentPov.pitch * Math.PI / 180
       const clampedZoom = Math.min(Math.max(currentPov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM)
       const fov = 180 / Math.pow(2, clampedZoom)
       

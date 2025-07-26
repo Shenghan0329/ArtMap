@@ -1,3 +1,5 @@
+import { THREED_IMAGE_SEPERATION, THREED_IMAGE_SHIFT, THREED_IMAGE_SIZE } from "@/constants/constants"
+
 /**
  * Generates objects circled around camera position, all facing the camera
  * Takes into account the camera's POV rotation from street view
@@ -77,13 +79,13 @@ function generateCameraFOVTransforms(count, pov, options = {}) {
   const transforms = []
   const halfCount = count / 2;
   for (let i = 0; i < halfCount; i++) {
-    const position = [4 + 4*i/(halfCount-1), 0, 0]
-    const rotation = [0, 0.2 * Math.random() - 0.1, 0];
+    const position = [(THREED_IMAGE_SHIFT -1 + 2*THREED_IMAGE_SEPERATION * i/(halfCount-THREED_IMAGE_SEPERATION)) * THREED_IMAGE_SIZE, 0, -5*THREED_IMAGE_SIZE]
+    const rotation = [0, 0.3 * Math.random() - 0.15, 0];
     transforms.push({ position, rotation })
   }
   for (let i = 0; i < halfCount; i++) {
-    const position = [-4 - 4*i/(halfCount-1), 0, 10]
-    const rotation = [0, Math.PI + 0.2 * Math.random() - 0.1, 0];
+    const position = [(-THREED_IMAGE_SHIFT + 1 - 2*THREED_IMAGE_SEPERATION * i/(halfCount-THREED_IMAGE_SEPERATION)) * THREED_IMAGE_SIZE, 0, 5*THREED_IMAGE_SIZE]
+    const rotation = [0, Math.PI + 0.3 * Math.random() - 0.15, 0];
     transforms.push({ position, rotation })
   }
   return transforms;

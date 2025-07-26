@@ -4,6 +4,7 @@ const STREETVIEW_OPTIONS = {
     fullscreenControl: false,
     zoomControl: false,
     scrollwheel: false,
-    enableCloseButton: false
+    enableCloseButton: false,
+    panControl: false
 }
 export default STREETVIEW_OPTIONS;

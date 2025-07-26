@@ -15,7 +15,7 @@ import { PictureFrame3D } from "@/components/3D/PictureFrame3D";
 import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
-import MapPanel from "./MapPanel";
+import MapPanel from "../../components/MapPanel/MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import { generateCameraFOVTransforms } from "@/common/getRandomPositions";
 
@@ -141,6 +141,7 @@ const TwoDimensionalMap = () => {
             pinned.map((place, index) => {
                 return(
                 <AdvancedMarker 
+                    className = "pointer-events-auto"
                     position={place.geometry.location} 
                     key={getKey(place.formatted_address, index)}
                     onClick={() => {
@@ -218,6 +219,7 @@ const TwoDimensionalMap = () => {
             }
         });
         map.addListener('center_changed', () => {
+            setVisible(false);
             setLoadingEnabled(true);
         });
     }, [map, placesLib]);
@@ -241,6 +243,7 @@ const TwoDimensionalMap = () => {
             }
         });
         streetView.addListener("pov_changed", () => {
+            setVisible(false);
             const pov = streetView.getPov();
             if (pov.zoom < STREETVIEW_MIN_ZOOM) {
                 pov.zoom = STREETVIEW_MIN_ZOOM;
@@ -262,7 +265,13 @@ const TwoDimensionalMap = () => {
     
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
-            {!is2D && <PictureFrame3D artworks={artworks} setArtwork={setArtwork} setVisible={setVisible} pov={map?.streetView?.getPov() || defaultPov} />}
+            {!is2D && 
+                <PictureFrame3D 
+                    artworks={artworks} 
+                    setArtwork={setArtwork} 
+                    setVisible={setVisible} 
+                    pov={map?.streetView?.getPov() || defaultPov}
+                />}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
                 handleZoomOut={handleZoomOut}

@@ -62,10 +62,17 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
     const borderClass = is3D ? 'border-gray-600' : 'border-gray-200';
 
     return (<div className={`relative h-screen ${backgroundClass} shadow-lg overflow-scroll max-[768px]:w-[100vw]`}>
-        <div className={`fixed z-5 top-0 right-4 text-sm ${secondaryTextClass} hover:${is3D ? 'text-white' : 'text-gray-700'} cursor-pointer`} onClick={() => setDetails(false)}>{is3D ? 'Reload Gallary' : 'Back to Gallery'}</div>
+        <div 
+            className="fixed top-4 right-12 z-50 px-2 py-1 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white text-xs rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
+            onClick={() => setDetails(false)}
+        >
+        <div className="flex items-center gap-2">
+            {is3D ? 'Reload Gallery' : 'Back to Gallery'}
+        </div>
+        </div>
         <div className={`flex ${flexDir} w-full max-[768px]:flex-col`}>
             {/* Image Section */}
-            <div className={`relative h-[60vh] w-full max-[768px]:w-full min-[769px]:${description ? 'flex-1 max-w-[67vw]' : 'w-full'}`}>
+            <div className={`relative h-[60vh] w-full max-[768px]:w-full min-[769px]:${description ? 'max-w-[67vw]' : 'w-full'}`}>
                 {imageUrl ? (
                     <ArtworkImage artwork={artwork} defaultImage={'primaryImageLarge'} altImage={['primaryImageMedium', 'primaryImageSmall']} />
                 ) : (
@@ -84,11 +91,11 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
             <div className={`w-[33vw] max-[768px]:w-[100vw] max-[768px]:h-auto ${contentHeight} p-8 overflow-scroll`}>
             <div className="space-y-6">
                 {/* Title and Reference */}
-                <div>
-                <h1 className={`text-3xl font-bold ${primaryTextClass} mb-2`}>{title}</h1>
-                {main_reference_number && (
-                    <p className={`text-sm ${secondaryTextClass}`}>Accession Number: {main_reference_number}</p>
-                )}
+                <div className={`font-bold ${primaryTextClass}`}>
+                    <h1 className="inline text-3xl mb-2">{title?.length > 50 ? title.replace(/ .*/,'') : title}</h1>
+                    {title?.length > 50 && <p className="inline">{title.slice(
+                        title.replace(/ .*/,'').length, title.length
+                    )}</p>}
                 </div>
 
                 {/* Artist Information */}
