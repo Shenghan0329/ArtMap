@@ -40,8 +40,8 @@ const MapPanel = ({place, isSmall=false}) => {
 
         const handleScroll = (e) => {
             e.stopPropagation(); // Prevent scroll from bubbling to parent
-            
-            if (isLoading || isEnd) return;
+            console.log('aaa');
+            if (isLoading || isEnd || details) return;
             
             const scrollTop = container.scrollTop;
             const scrollHeight = container.scrollHeight;
@@ -70,7 +70,7 @@ const MapPanel = ({place, isSmall=false}) => {
             container.removeEventListener('scroll', handleScroll);
             container.removeEventListener('wheel', handleWheel);
         };
-    }, [isLoading, isEnd]);
+    }, [isLoading, isEnd, details]);
 
     
     
