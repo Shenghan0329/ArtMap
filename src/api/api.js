@@ -12,12 +12,14 @@ const getArtworkById = async (id) => {
             const primaryImageLarge = getImageById(imageId, 'lg');
             const primaryImageMedium = getImageById(imageId, 'md');
             const primaryImageSmall = getImageById(imageId, 'sm');
-            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall};
+            const validImage = await getValidUrl({primaryImageLarge, primaryImageMedium, primaryImageSmall});
+            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall, validImage};
         } else {
             const primaryImageLarge = sampleImage;
             const primaryImageMedium = sampleImage;
             const primaryImageSmall = sampleImage;
-            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall};
+            const validImage = sampleImage;
+            return {...response.data, primaryImageLarge, primaryImageMedium, primaryImageSmall, validImage};
         }
     } else {
         return response;
@@ -37,7 +39,20 @@ const getImageById = (imageId, s='md') => {
     return url;
 }
 
-export {getArtworkById, getArtworksByQuery, getImageById};
+const getValidUrl = async (artwork, sizes=['primaryImageLarge', 'primaryImageMedium', 'primaryImageSmall']) => {
+    for (let i = 0; i < sizes.length; i++) {
+        const size = sizes[i];
+        const res = await fetch(artwork[size]);
+        if (!res?.ok) {
+            continue;
+        } else {
+            return artwork[size];
+        }
+    }
+    return './sample-img.jpg';
+}
+
+export {getArtworkById, getArtworksByQuery, getImageById, getValidUrl};
 
 // {
 // data: {

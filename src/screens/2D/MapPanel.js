@@ -82,7 +82,6 @@ const MapPanel = ({place, isSmall=false}) => {
                 <div ref={containerRef} className="overflow-y-auto overflow-x-hidden w-full h-[20vh] flex flex-col">
                     <div className="flex flex-row p-2">
                         {!isSmall && (<TimeLine time={time} setTime={setTime}/>)}
-                        <button className="text-gray-500 text-xs" onClick={() => {setToQuery(true)}}>Reload</button>
                     </div>
                     
                     <div className="mb-2 m-2">Year: {time}</div>
@@ -103,7 +102,7 @@ const MapPanel = ({place, isSmall=false}) => {
                                 <ArtworkImage artwork={item} />
                                 <div className="absolute inset-0 bg-black/10"></div>
                                 <div className="absolute bottom-2 right-2 text-white text-sm text-right">
-                                    <div className="font-bold">{item?.title}</div>
+                                    <div className="font-bold">{item?.title?.length <= 66 ? item?.title : item?.title?.slice(0, 60) + '...'}</div>
                                     <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
                                 </div>                     
                             </div>
@@ -118,6 +117,11 @@ const MapPanel = ({place, isSmall=false}) => {
                 {isEnd && (
                     <div className="flex justify-center py-4">
                         <div className="text-gray-500">No more artworks to load</div>
+                    </div>
+                )}
+                {!isLoading && !isEnd && (
+                    <div className="flex justify-center py-4">
+                        <div className="text-gray-500" onClick={() => {setToQuery(true)}}>Load More</div>
                     </div>
                 )}
             </div>

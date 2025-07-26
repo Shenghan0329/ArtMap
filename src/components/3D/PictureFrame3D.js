@@ -256,7 +256,7 @@ function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO,
           <boxGeometry />
           <meshBasicMaterial toneMapped={false} fog={false} />
         </mesh>
-        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={artwork?.primaryImageLarge} />
+        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={artwork?.validImage} />
       </mesh>
       <Text maxWidth={0.1} anchorX="left" anchorY="top" position={[0.55, GOLDENRATIO, 0]} fontSize={0.025}>
         {name.split('-').join(' ')}

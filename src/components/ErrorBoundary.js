@@ -52,9 +52,15 @@ export function GlobalErrorBoundary({ children }) {
           if (response.status === 429) {
             errorMessage = 'Too many requests. Please try again later.';
           } else if (response.status >= 500) {
-            errorMessage = 'Server error. Please try again later.';
+            errorMessage = 'External server error. Please try again later.';
           } else if (response.status >= 400) {
-            errorMessage = 'Request failed. Please check your input.';
+            if (args[0]?.includes('/iiif/2')) {
+              // A common Error caused by Image api cache, pretend nothing happens
+              console.log("Hide a trivial error.");
+              return;
+            } else {
+              errorMessage = 'Request failed, please try again later';
+            }
           }
           
           setError(errorMessage);
