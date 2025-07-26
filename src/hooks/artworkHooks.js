@@ -5,7 +5,7 @@ import getState from "@/common/getState";
 
 import { getArtworkById, getArtworksByQuery } from "@/api/api";
 
-const MAX_SIZE = 96;
+const MAX_SIZE = 12;
 const REGION_TYPES = ['local', 'county','state'];
 
 /*
@@ -22,7 +22,7 @@ export function useArtworks(
     map, placesLib, place, 
     toQuery, setToQuery, 
     setIsLoading, setIsEnd, setError, 
-    PAGE_SIZE = 6, limitSize = false, size = 3
+    PAGE_SIZE = 6, limitSize = false, size = 3,
 ) {
     const [artworks, setArtworks] = useState([]);
 
@@ -135,11 +135,7 @@ export function useArtworks(
             setIsLoading(true);
             const fetchArtworks = async (ids) => {
                 let artworksLeft = 0;
-                if (limitSize) {
-                    artworksLeft = size - artworks.length;
-                } else {
-                    artworksLeft = PAGE_SIZE;
-                }
+                artworksLeft = PAGE_SIZE;
                 const aws = [];
                 let cg = currGallary;
                 while (artworksLeft > 0) {
@@ -148,8 +144,13 @@ export function useArtworks(
                     if (selectedIds.length === 0) {
                         // Run out of artworks
                         if (cg === 2) {
-                            setIsEnd(true);
-                            break; 
+                            if (!limitSize) {
+                                setIsEnd(true);
+                                break; 
+                            } else {
+                                setCurrGallary(0);
+                                rs.reset(ids[REGION_TYPES[0]]);
+                            }
                         }
                         // Find artworks in next level of region
                         rs.reset(ids[REGION_TYPES[currGallary + 1]]);
@@ -172,18 +173,11 @@ export function useArtworks(
                         artworksLeft -= 1;
                     }
                 }
-                // if (limitSize) {
-                //     const newLength = artworks.length + aws.length;
-                //     if (size < newLength) {
-                //         setArtworks(prev => [...prev,...aws].slice(newLength - size, newLength));
-                //     } else {
-                //         setArtworks(prev => [...prev,...aws]);
-                //     }
-                // } else {
-                //     setArtworks(prev => [...prev,...aws]);
-                // }
-                setArtworks(prev => [...prev,...aws]);
-                console.log('Artworks: ', [...artworks, ...aws]);
+                if (limitSize) {
+                    setArtworks(aws);
+                } else {
+                    setArtworks(prev => [...prev,...aws]);
+                }
                 setIsLoading(false);
             }
             fetchArtworks(ids);

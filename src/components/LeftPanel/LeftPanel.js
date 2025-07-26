@@ -6,11 +6,7 @@ const LeftPanel = ({ visible, setVisible, widthRatio='w-auto', transparent = fal
     return (
         <div
             className={`fixed top-0 left-0 ${widthRatio} h-full bg-white shadow-lg z-5 transform transition-transform duration-300 ease-in-out ${
-                visible ? 'translate-x-0' : '-translate-x-full'}`}
-            style = {{
-                opacity: transparent? 0.5 : 1,
-                backgroundColor: transparent ? 'black' : 'white',
-            }}
+                visible ? 'translate-x-0' : '-translate-x-full'} ${transparent ? 'bg-opacity-50' : 'bg-opacity-100'} ${transparent ? 'bg-black' : 'bg-white'}`}
         >
 
             {/* Panel content */}

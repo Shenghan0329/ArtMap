@@ -17,11 +17,12 @@ import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import MapPanel from "./MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
+import { generateCameraFOVTransforms } from "@/common/getRandomPositions";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
+const IMAGE_NUMBER = 6;
 
-const IMAGE_NUMBER = 3;
 const defaultPov = {heading: 0, pitch: 0};
 
 const TwoDimensionalMap = () => {
@@ -55,21 +56,8 @@ const TwoDimensionalMap = () => {
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, 1, true, IMAGE_NUMBER);
-    const positions = [[0, 0, 0], [-1, 0, -3], [-2, 0, -6]];
-    const rotation = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    const images = artworks.map((artwork, index) => {
-        return {
-            position: positions[index],
-            rotation: rotation[index],
-            artwork: artwork,
-            onClick: () => {
-                setArtwork(artwork);
-                setVisible(true);
-            }
-        }
-    });
-
+    const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, IMAGE_NUMBER, true, IMAGE_NUMBER, true);
+    
     const handleZoomIn = () => {
         if (map) {
             if (is2D) map.setZoom(map.getZoom() + 1);
@@ -204,7 +192,9 @@ const TwoDimensionalMap = () => {
     useEffect(() => {
         if (!map) return; 
         const streetView = map.getStreetView();
+        console.log(streetViewAvailable);
         if (!is2D && isSmall && streetViewAvailable) {
+            console.log('aaa');
             streetView.setVisible(true);  
             setLoadingEnabled(false);     
         } else {
@@ -238,7 +228,7 @@ const TwoDimensionalMap = () => {
         streetView.setOptions(STREETVIEW_OPTIONS);
         streetView.setZoom(0);
         const pov = streetView.getPov();
-        streetView.addListener("position_changed", () => {
+        streetView.addListener("pano_changed", () => {
             setStreetViewAvailable(true);
         });
         streetView.addListener("status_changed", () => {
@@ -263,12 +253,16 @@ const TwoDimensionalMap = () => {
                 streetView.setZoom(pov.zoom);
             }
         });
+        streetView.addListener("position_changed", () => {
+            setToQuery(true);
+            console.log('changed');
+        });
     }, [map]);
 
     
     return (
         <div className="font-[family-name:var(--font-geist-sans)] w-full h-screen">
-            {!is2D && <PictureFrame3D pov={map?.streetView?.getPov() || defaultPov} images={images} />}
+            {!is2D && <PictureFrame3D artworks={artworks} setArtwork={setArtwork} setVisible={setVisible} pov={map?.streetView?.getPov() || defaultPov} />}
             <ZoomButtons 
                 handleZoomIn={handleZoomIn}
                 handleZoomOut={handleZoomOut}
@@ -277,6 +271,7 @@ const TwoDimensionalMap = () => {
                 isSmall && selectedPos !== null && (
                     <SwitchButton onClick={async () => {
                         setIs2D(prev => !prev);
+                        setStreetViewAvailable(true);
                         setVisible(false);
                     }} />
                 )
@@ -292,8 +287,9 @@ const TwoDimensionalMap = () => {
                     <ArtworkDisplay 
                         artwork={artwork} 
                         setDetails={() => {
-                            setVisible(false);
+                            setToQuery(true);
                         }}
+                        is3D={true}
                     />
                 }
             </LeftPanel>

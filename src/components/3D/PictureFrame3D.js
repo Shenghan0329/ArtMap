@@ -6,13 +6,15 @@ import { useRouter, useParams } from 'next/navigation'
 import { easing } from 'maath'
 import getUuid from 'uuid-by-string'
 import { useMap } from '@vis.gl/react-google-maps'
+import { generateCameraFOVTransforms } from '@/common/getRandomPositions'
 
 const GOLDENRATIO = 1.61803398875
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
+const IMAGE_NUMBER = 6;
 
-export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => {
+export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 1, frameHeight = GOLDENRATIO * 1, backgroundColor = 'transparent', showFog = false }) => {
   const map = useMap()
   const [cameraData, setCameraData] = useState(null)
   const [initialCameraConfig, setInitialCameraConfig] = useState({
@@ -21,6 +23,25 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
     rotation: [0, 0, 0]
   })
   
+  // const positions = [[0, 0, 0], [-1, 0, -3], [-2, 0, -6]];
+    // const rotation = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    const images = useMemo(() => {
+        if (!map) return [];
+        const streetView = map.getStreetView();
+        const pov = streetView.getPov();
+        const transforms = generateCameraFOVTransforms(IMAGE_NUMBER, pov);
+        return artworks.map((artwork, index) => {
+            return {
+                position: transforms[index].position,
+                rotation: transforms[index].rotation,
+                artwork: artwork,
+                onClick: () => {
+                    setArtwork(artwork);
+                    setVisible(true);
+                }
+            }
+        })
+    }, [map, artworks])
   // Get initial POV for camera setup
   useEffect(() => {
     if (map) {
@@ -28,6 +49,7 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
       if (streetView) {
         try {
           const pov = streetView.getPov()
+          console.log(pov);
           const heading = -pov.heading * Math.PI / 180
           const pitch = pov.pitch * Math.PI / 180
           const clampedZoom = Math.min(Math.max(pov.zoom, STREETVIEW_MIN_ZOOM), STREETVIEW_MAX_ZOOM)
@@ -43,7 +65,9 @@ export const PictureFrame3D = ({ images, frameWidth = 1, frameHeight = GOLDENRAT
         }
       }
     }
-  }, [map])
+  }, [map]);
+
+  
   
   return (
     <div style={{ 
@@ -197,7 +221,7 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     >
       {images.map((props, index) => {
         return(<Frame 
-          key={getUuid(props.artwork?.title)} 
+          key={getUuid(props.artwork?.title + props.artwork?.id)} 
           {...props} 
           selectedId={selectedId} 
           frameWidth={frameWidth} 
@@ -215,7 +239,7 @@ function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO,
   const [hovered, hover] = useState(false)
   const [rnd, setRnd] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const name = getUuid(artwork?.title)
+  const name = getUuid(artwork?.title + artwork?.id)
   const isActive = selectedId === name
 
   // Set random value only on client side after mount
@@ -303,7 +327,7 @@ function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDEN
       const positions = []
       
       images.forEach((imageProps, index) => {
-        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork?.title))
+        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork?.title + imageProps.artwork?.id))
         if (frameObject) {
           try {
             // Get the frame's world matrix

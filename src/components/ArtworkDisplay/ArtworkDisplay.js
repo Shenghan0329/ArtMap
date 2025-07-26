@@ -1,6 +1,6 @@
 import ArtworkImage from "../ArtworkImage/ArtworkImage";
 
-const ArtworkDisplay = ({ artwork, setDetails }) => {
+const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
     if (!artwork) {
         return (
         <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
@@ -52,8 +52,8 @@ const ArtworkDisplay = ({ artwork, setDetails }) => {
     const contentHeight = description ? 'h-[60vh]' : 'h-auto';
     const flexDir = description ? 'flex-row' : 'flex-col';
 
-    return (<div className="relative mx-auto h-screen bg-white shadow-lg overflow-scroll max-[768px]:w-[100vw]">
-        <div className="fixed z-5 top-0 right-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer" onClick={() => setDetails(false)}>Back to Gallery</div>
+    return (<div className={`relative mx-auto h-screen bg-white shadow-lg overflow-scroll max-[768px]:w-[100vw]`}>
+        <div className="fixed z-5 top-0 right-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer" onClick={() => setDetails(false)}>{is3D ? 'Reload Gallary' : 'Back to Gallery'}</div>
         <div className={`md:flex ${flexDir}`}>
             {/* Image Section */}
             <div className={`relative h-[60vh] w-full min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
