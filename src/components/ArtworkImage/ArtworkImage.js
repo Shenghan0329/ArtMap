@@ -23,7 +23,7 @@ export default function ArtworkImage({artwork, defaultImage = 'primaryImageMediu
     return (
         <Image                             
             className="dark:invert w-full h-full object-cover"                             
-            src={hasError ? artwork[defaultImage] : artwork[imageSize]}                  
+            src={!failed ? (hasError ? artwork[defaultImage] : artwork[imageSize]) : '/sample-img.jpg'}                  
             alt={artwork?.thumbnail?.alt_text || artwork?.title || 'Artwork'}                          
             fill={true}                             
             sizes='500px'                             

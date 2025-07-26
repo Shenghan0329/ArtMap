@@ -29,6 +29,10 @@ const MapPanel = ({place, isSmall=false}) => {
 
     const detailedPlace = usePlace(place, map, placesLib, smallMapDetailsQuery);
 
+    useEffect(() => {
+        setDetails(false);
+    }, [place])
+
     // Scroll event listener for loading more content
     useEffect(() => {
         const container = containerRef.current;

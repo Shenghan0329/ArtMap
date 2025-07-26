@@ -20,10 +20,10 @@ class ErrorBoundary extends React.Component {
       error.message || 'Something went wrong',
     );
 
-    // // Reset the error state after a brief moment so the boundary can catch future errors
-    // setTimeout(() => {
-    //   this.setState({ hasError: false });
-    // }, 100);
+    // Reset the error state after a brief moment so the boundary can catch future errors
+    setTimeout(() => {
+      this.setState({ hasError: false });
+    }, 100);
   }
 
   render() {
@@ -42,20 +42,61 @@ export function GlobalErrorBoundary({ children }) {
 
   // Add window error listeners to catch console errors and async errors
   useEffect(() => {
+    // Override fetch to catch all network errors
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      try {
+        const response = await originalFetch(...args);
+        if (!response.ok) {
+          let errorMessage = `Request failed with status ${response.status}`;
+          if (response.status === 429) {
+            errorMessage = 'Too many requests. Please try again later.';
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (response.status >= 400) {
+            errorMessage = 'Request failed. Please check your input.';
+          }
+          
+          setError(errorMessage);
+        }
+        return response;
+      } catch (error) {
+        setError('Network error. Please check your connection.');
+        throw error;
+      }
+    };
+
     const handleError = (event) => {
       console.log('Window error caught:', event.error);
-      setError(error.message || 'Something went wrong');
+      setError(event.error?.message || 'Something went wrong');
     };
 
     const handleRejection = (event) => {
       console.log('Unhandled promise rejection:', event.reason);
-      setError(error.message || 'Something went wrong');
+      
+      let errorMessage = 'Something went wrong';
+      
+      // Handle different types of network errors
+      if (event.reason?.status === 429) {
+        errorMessage = 'Too many requests. Please try again later.';
+      } else if (event.reason?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (event.reason?.status >= 400) {
+        errorMessage = 'Request failed. Please check your input.';
+      } else if (event.reason?.message) {
+        errorMessage = event.reason.message;
+      } else if (typeof event.reason === 'string') {
+        errorMessage = event.reason;
+      }
+      
+      setError(errorMessage);
     };
 
     window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleRejection);
 
     return () => {
+      window.fetch = originalFetch; // Restore original fetch
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleRejection);
     };

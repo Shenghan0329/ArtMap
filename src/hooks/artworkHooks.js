@@ -59,7 +59,6 @@ export function useArtworks(
         });
         if (!map || !placesLib) return;
         if (place && Object.keys(place).length) {
-            console.log("Place: " + place);
             let local = '';
             let county = '';
             let state = '';
@@ -90,7 +89,6 @@ export function useArtworks(
     }, [map, placesLib, place]);
 
     useEffect(() => {
-        console.log("CurrRegion: ", currRegion);
         async function fetchIDsAll() {
             const newIds = {...ids};
             for (let region of REGION_TYPES){

@@ -15,7 +15,6 @@ import { PictureFrame3D } from "@/components/3D/PictureFrame3D";
 import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
-import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
 import MapPanel from "./MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 
@@ -59,7 +58,6 @@ const TwoDimensionalMap = () => {
     const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, 1, true, IMAGE_NUMBER);
     const positions = [[0, 0, 0], [-1, 0, -3], [-2, 0, -6]];
     const rotation = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    console.log('aaa');
     const images = artworks.map((artwork, index) => {
         return {
             position: positions[index],
@@ -120,6 +118,7 @@ const TwoDimensionalMap = () => {
         setCanPin(false)
         setToPin([]);
         let maxResults = MAP_OPTIONS.MAX_LABELS;
+        console.log("Searching for places");
         svc.nearbySearch({
             'bounds': bounds,
             ...queryText
@@ -129,6 +128,7 @@ const TwoDimensionalMap = () => {
                 maxResults -= res.length;
             } else {
                 maxResults = MAP_OPTIONS.MAX_LABELS;
+                setCanPin(true);
             }
         });
         setLoadingEnabled(false);
@@ -205,7 +205,8 @@ const TwoDimensionalMap = () => {
         if (!map) return; 
         const streetView = map.getStreetView();
         if (!is2D && isSmall && streetViewAvailable) {
-            streetView.setVisible(true);       
+            streetView.setVisible(true);  
+            setLoadingEnabled(false);     
         } else {
             streetView.setVisible(false);
         }
@@ -221,9 +222,9 @@ const TwoDimensionalMap = () => {
                 setLoadingEnabled(true);
             }
             if (zoom > 13) {
-                if (!isSmall) setIsSmall(true);
+                setIsSmall(prev => true);
             } else {
-                if (isSmall) setIsSmall(false);
+                setIsSmall(prev =>false);
             }
         });
         map.addListener('center_changed', () => {
@@ -276,6 +277,7 @@ const TwoDimensionalMap = () => {
                 isSmall && selectedPos !== null && (
                     <SwitchButton onClick={async () => {
                         setIs2D(prev => !prev);
+                        setVisible(false);
                     }} />
                 )
             }
