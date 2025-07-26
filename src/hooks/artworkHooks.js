@@ -5,7 +5,7 @@ import getState from "@/common/getState";
 
 import { getArtworkById, getArtworksByQuery } from "@/api/api";
 
-const MAX_SIZE = 12;
+const MAX_SIZE = 96;
 const REGION_TYPES = ['local', 'county','state'];
 
 /*

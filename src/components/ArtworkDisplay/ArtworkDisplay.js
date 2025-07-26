@@ -36,7 +36,7 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
         if (!artistDisplay) return null;
         const lines = artistDisplay.split('\n').filter(line => line.trim());
         return lines.map((line, index) => (
-        <p key={index} className={index === 0 ? 'font-semibold text-gray-900' : 'text-gray-600 text-sm'}>
+        <p key={index} className={index === 0 ? `font-semibold ${is3D ? 'text-white' : 'text-gray-900'}` : `${is3D ? 'text-gray-300' : 'text-gray-600'} text-sm`}>
             {line.trim()}
         </p>
         ));
@@ -52,16 +52,25 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
     const contentHeight = description ? 'h-[60vh]' : 'h-auto';
     const flexDir = description ? 'flex-row' : 'flex-col';
 
-    return (<div className={`relative mx-auto h-screen bg-white shadow-lg overflow-scroll max-[768px]:w-[100vw]`}>
-        <div className="fixed z-5 top-0 right-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer" onClick={() => setDetails(false)}>{is3D ? 'Reload Gallary' : 'Back to Gallery'}</div>
-        <div className={`md:flex ${flexDir}`}>
+    // Conditional styling for 3D mode
+    const backgroundClass = is3D ? 'bg-black/50' : 'bg-white';
+    const primaryTextClass = is3D ? 'text-white' : 'text-gray-900';
+    const secondaryTextClass = is3D ? 'text-gray-300' : 'text-gray-500';
+    const tertiaryTextClass = is3D ? 'text-gray-300' : 'text-gray-600';
+    const bodyTextClass = is3D ? 'text-gray-200' : 'text-gray-700';
+    const placeholderTextClass = is3D ? 'text-gray-300' : 'text-gray-400';
+    const borderClass = is3D ? 'border-gray-600' : 'border-gray-200';
+
+    return (<div className={`relative h-screen ${backgroundClass} shadow-lg overflow-scroll max-[768px]:w-[100vw]`}>
+        <div className={`fixed z-5 top-0 right-4 text-sm ${secondaryTextClass} hover:${is3D ? 'text-white' : 'text-gray-700'} cursor-pointer`} onClick={() => setDetails(false)}>{is3D ? 'Reload Gallary' : 'Back to Gallery'}</div>
+        <div className={`flex ${flexDir} w-full max-[768px]:flex-col`}>
             {/* Image Section */}
-            <div className={`relative h-[60vh] w-full min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
+            <div className={`relative h-[60vh] w-full max-[768px]:w-full min-[769px]:${description ? 'flex-1 max-w-[67vw]' : 'w-full'}`}>
                 {imageUrl ? (
                     <ArtworkImage artwork={artwork} defaultImage={'primaryImageLarge'} altImage={['primaryImageMedium', 'primaryImageSmall']} />
                 ) : (
                     <div className="flex items-center justify-center h-full">
-                        <div className="text-center text-gray-400">
+                        <div className={`text-center ${placeholderTextClass}`}>
                         <svg className="mx-auto h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -76,16 +85,16 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
             <div className="space-y-6">
                 {/* Title and Reference */}
                 <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+                <h1 className={`text-3xl font-bold ${primaryTextClass} mb-2`}>{title}</h1>
                 {main_reference_number && (
-                    <p className="text-sm text-gray-500">Accession Number: {main_reference_number}</p>
+                    <p className={`text-sm ${secondaryTextClass}`}>Accession Number: {main_reference_number}</p>
                 )}
                 </div>
 
                 {/* Artist Information */}
                 {artist_display && (
                 <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Artist</h3>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide mb-2`}>Artist</h3>
                     <div className="space-y-1">
                     {parseArtistInfo(artist_display)}
                     </div>
@@ -96,49 +105,49 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
                 <div className="grid grid-cols-1 gap-4">
                 {date_display && (
                     <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Date</h3>
-                    <p className="text-gray-900">{date_display}</p>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide`}>Date</h3>
+                    <p className={primaryTextClass}>{date_display}</p>
                     </div>
                 )}
 
                 {medium_display && (
                     <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Medium</h3>
-                    <p className="text-gray-900">{medium_display}</p>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide`}>Medium</h3>
+                    <p className={primaryTextClass}>{medium_display}</p>
                     </div>
                 )}
 
                 {dimensions && (
                     <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Dimensions</h3>
-                    <p className="text-gray-900">{dimensions}</p>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide`}>Dimensions</h3>
+                    <p className={primaryTextClass}>{dimensions}</p>
                     </div>
                 )}
 
                 {place_of_origin && (
                     <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Place of Origin</h3>
-                    <p className="text-gray-900">{place_of_origin}</p>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide`}>Place of Origin</h3>
+                    <p className={primaryTextClass}>{place_of_origin}</p>
                     </div>
                 )}
                 </div>
 
                 {/* Location Information */}
                 {(department_title || gallery_title) && (
-                <div className="border-t pt-4">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Location</h3>
+                <div className={`border-t ${borderClass} pt-4`}>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide mb-2`}>Location</h3>
                     <div className="space-y-1">
-                    {department_title && <p className="text-gray-900">{department_title}</p>}
-                    {gallery_title && <p className="text-gray-600 text-sm">{gallery_title}</p>}
+                    {department_title && <p className={primaryTextClass}>{department_title}</p>}
+                    {gallery_title && <p className={`${tertiaryTextClass} text-sm`}>{gallery_title}</p>}
                     </div>
                 </div>
                 )}
 
                 {/* Credit Line */}
                 {credit_line && (
-                <div className="border-t pt-4">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Credit</h3>
-                    <p className="text-gray-600 text-sm italic">{credit_line}</p>
+                <div className={`border-t ${borderClass} pt-4`}>
+                    <h3 className={`text-sm font-medium ${secondaryTextClass} uppercase tracking-wide mb-2`}>Credit</h3>
+                    <p className={`${tertiaryTextClass} text-sm italic`}>{credit_line}</p>
                 </div>
                 )}
             </div>
@@ -147,9 +156,9 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
 
         {/* Description Section */}
         {description && (
-            <div className="h-[40vh] max-[768px]:h-auto px-8 pb-8 pt-6 border-t min-[768px]:max-w-[67vw] max-[768px]:w-[100vw]">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">About This Work</h3>
-                <div className="text-gray-700 leading-relaxed overflow-scroll h-[calc(100%-2rem)] w-full max-[768px]:h-auto">
+            <div className={`h-[40vh] max-[768px]:h-auto px-8 pb-8 pt-6 border-t ${borderClass} w-auto min-[769px]:max-w-[67vw] max-[768px]:w-[100vw]`}>
+                <h3 className={`text-lg font-semibold ${primaryTextClass} mb-3`}>About This Work</h3>
+                <div className={`${bodyTextClass} leading-relaxed overflow-scroll h-[calc(100%-2rem)] w-full max-[768px]:h-auto`}>
                     <p>{cleanDescription(description)}</p>
                 </div>
             </div>
