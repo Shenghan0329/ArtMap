@@ -193,9 +193,7 @@ const TwoDimensionalMap = () => {
     useEffect(() => {
         if (!map) return; 
         const streetView = map.getStreetView();
-        console.log(streetViewAvailable);
         if (!is2D && isSmall && streetViewAvailable) {
-            console.log('aaa');
             streetView.setVisible(true);  
             setLoadingEnabled(false);     
         } else {
@@ -243,7 +241,7 @@ const TwoDimensionalMap = () => {
             }
         });
         streetView.addListener("pov_changed", () => {
-            setVisible(false);
+            if (!is2D) setVisible(false);
             const pov = streetView.getPov();
             if (pov.zoom < STREETVIEW_MIN_ZOOM) {
                 pov.zoom = STREETVIEW_MIN_ZOOM;
@@ -258,7 +256,6 @@ const TwoDimensionalMap = () => {
         });
         streetView.addListener("position_changed", () => {
             setToQuery(true);
-            console.log('changed');
         });
     }, [map]);
 
