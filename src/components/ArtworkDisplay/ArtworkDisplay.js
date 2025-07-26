@@ -51,13 +51,12 @@ const ArtworkDisplay = ({ artwork, setDetails }) => {
     // Determine content height based on whether description exists
     const contentHeight = description ? 'h-[60vh]' : 'h-auto';
     const flexDir = description ? 'flex-row' : 'flex-col';
-    const imageWidth = thumbnail?.width && thumbnail?.height ? 'w-[' + Math.floor((thumbnail.width / thumbnail.height) * 60) + 'vh]' : "w-[60vh]";
 
     return (<div className="relative mx-auto h-screen bg-white shadow-lg overflow-scroll max-[768px]:w-[100vw]">
         <div className="fixed z-5 top-0 right-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer" onClick={() => setDetails(false)}>Back to Gallery</div>
         <div className={`md:flex ${flexDir}`}>
             {/* Image Section */}
-            <div className={`relative h-[60vh] ${imageWidth} min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
+            <div className={`relative h-[60vh] w-full min-[768px]:max-w-[67vw] max-[768px]: w-[100vw]`}>
                 {imageUrl ? (
                     <ArtworkImage artwork={artwork} defaultImage={'primaryImageLarge'} altImage={['primaryImageMedium', 'primaryImageSmall']} />
                 ) : (

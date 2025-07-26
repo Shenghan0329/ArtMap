@@ -136,7 +136,12 @@ export function useArtworks(
         if (rs && toQuery) {
             setIsLoading(true);
             const fetchArtworks = async (ids) => {
-                let artworksLeft = PAGE_SIZE;
+                let artworksLeft = 0;
+                if (limitSize) {
+                    artworksLeft = size - artworks.length;
+                } else {
+                    artworksLeft = PAGE_SIZE;
+                }
                 const aws = [];
                 let cg = currGallary;
                 while (artworksLeft > 0) {
@@ -169,16 +174,17 @@ export function useArtworks(
                         artworksLeft -= 1;
                     }
                 }
-                if (limitSize) {
-                    const newLength = artworks.length + aws.length;
-                    if (size < newLength) {
-                        setArtworks(prev => [...prev,...aws].slice(newLength - size, newLength));
-                    } else {
-                        setArtworks(prev => [...prev,...aws]);
-                    }
-                } else {
-                    setArtworks(prev => [...prev,...aws]);
-                }
+                // if (limitSize) {
+                //     const newLength = artworks.length + aws.length;
+                //     if (size < newLength) {
+                //         setArtworks(prev => [...prev,...aws].slice(newLength - size, newLength));
+                //     } else {
+                //         setArtworks(prev => [...prev,...aws]);
+                //     }
+                // } else {
+                //     setArtworks(prev => [...prev,...aws]);
+                // }
+                setArtworks(prev => [...prev,...aws]);
                 console.log('Artworks: ', [...artworks, ...aws]);
                 setIsLoading(false);
             }

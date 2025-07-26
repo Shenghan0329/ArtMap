@@ -17,6 +17,7 @@ import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import StreetViewPanel from "./StreetViewPanel/StreetViewPanel";
 import MapPanel from "./MapPanel";
+import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
@@ -284,7 +285,15 @@ const TwoDimensionalMap = () => {
                 disabled={!loadingEnabled}
             >Load More</button>
             <LeftPanel visible={visible} setVisible={setVisible} transparent={isSmall && !is2D}>
-                {is2D ? <MapPanel place={panelObject} isSmall={isSmall} /> : <StreetViewPanel artwork={artwork} />}
+                {is2D ? 
+                    <MapPanel place={panelObject} isSmall={isSmall} /> : 
+                    <ArtworkDisplay 
+                        artwork={artwork} 
+                        setDetails={() => {
+                            setVisible(false);
+                        }}
+                    />
+                }
             </LeftPanel>
             <GoogleMapSelector>
                 {markers}
