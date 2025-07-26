@@ -97,8 +97,8 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
         {/* Add lighting for shadows */}
         <ambientLight intensity={0.3} />
         <directionalLight 
-          position={[0, 20, -5]} 
-          intensity={1}
+          position={[0, 40, 5]} 
+          intensity={0.4}
           castShadow
           shadow-mapSize={[1024, 1024]}
           shadow-camera-far={50}
@@ -118,7 +118,7 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
           {/* Ground plane to receive shadows - angled towards audience */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -1]} receiveShadow raycast={() => null}>
             <planeGeometry args={[20, 20]} />
-            <shadowMaterial transparent opacity={0.4} />
+            <shadowMaterial transparent opacity={0.3} />
           </mesh>
           
         </group>

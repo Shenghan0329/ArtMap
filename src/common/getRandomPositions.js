@@ -74,33 +74,18 @@ function generateCameraFOVTransforms(count, pov, options = {}) {
     rotationNoise = 0
   } = options
   
-  const cameraHeading = -pov.heading * Math.PI / 180
-  const cameraPitch = pov.pitch * Math.PI / 180
-  
-  // Calculate camera's forward direction
-  const forwardX = Math.cos(cameraPitch) * Math.cos(cameraHeading)
-  const forwardY = Math.cos(cameraPitch) * Math.sin(cameraHeading)
-  const forwardZ = Math.sin(cameraPitch)
-  
-  // Center point in front of camera
-  const centerX = distance * forwardX
-  const centerY = distance * forwardY
-  const centerZ = distance * forwardZ
-  
   const transforms = []
-  const angleStep = (Math.PI * 2) / count
   const halfCount = count / 2;
   for (let i = 0; i < halfCount; i++) {
-    const position = [6*i/(halfCount-1), 0, 0]
-    const rotation = [0, 0, 0];
+    const position = [4 + 4*i/(halfCount-1), 0, 0]
+    const rotation = [0, 0.2 * Math.random() - 0.1, 0];
     transforms.push({ position, rotation })
   }
   for (let i = 0; i < halfCount; i++) {
-    const position = [-6*i/(halfCount-1), 0, 10]
-    const rotation = [0, Math.PI + 0.5 * Math.random() - 0.25, 0];
+    const position = [-4 - 4*i/(halfCount-1), 0, 10]
+    const rotation = [0, Math.PI + 0.2 * Math.random() - 0.1, 0];
     transforms.push({ position, rotation })
   }
-  console.log(transforms);
   return transforms;
 }
 
