@@ -1,7 +1,7 @@
 "use client"
 import Image from 'next/image';
 
-const SwitchButton = ({onClick}) => {
+const SwitchButton = ({onClick, place }) => {
     return (
     <button
         onClick={onClick}
@@ -11,31 +11,31 @@ const SwitchButton = ({onClick}) => {
             fixed bottom-4 right-16 
         "
     >
-        <SwitchButtonImage />
-        <DestinationCard />
+        <SwitchButtonImage place={place}/>
+        <DestinationCard label={'Street View'}/>
     </button>
 
     )
 }
 
-const SwitchButtonImage = ({src="/sample-img.jpg"}) => {
+const SwitchButtonImage = ({place}) => {
     return (
         <div className="relative aspect-square w-22 h-16 bg-gray-100">
             <Image
-            className="dark:invert"
-            src={src}
-            alt="Sample Image"
-            layout="fill"
-            style={{ objectFit: 'cover' }}
-            priority
+                className="dark:invert"
+                src={place?.photos[0]?.getUrl() || '/sample.jpg'}
+                alt="Sample Image"
+                layout="fill"
+                style={{ objectFit: 'cover' }}
+                priority
             />
         </div>
     )
 }
 
-const DestinationCard = ({destination="Sample Destination"}) => {
+const DestinationCard = ({label="Sample Destination"}) => {
     return (
-        <div className="text-xs"><em className="font-semibold">{'> '}</em>{destination}</div>
+        <div className="text-xs"><em className="font-semibold">{'> '}</em>{label}</div>
     )
 }
 

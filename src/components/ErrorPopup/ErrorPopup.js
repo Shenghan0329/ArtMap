@@ -17,7 +17,7 @@ const ErrorPopup = () => {
                                 <span className="text-red-500 font-bold text-sm">!</span>
                             </div>
                             <span className="font-medium">
-                                {ErrorMessages[error] || error}
+                                {ErrorMessages[error] || "Error: " + error.slice(0, 60)}
                             </span>
                         </div>
                         

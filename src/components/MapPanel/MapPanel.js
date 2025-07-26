@@ -29,18 +29,18 @@ const MapPanel = ({place, isSmall=false}) => {
 
     const detailedPlace = usePlace(place, map, placesLib, smallMapDetailsQuery);
 
-    useEffect(() => {
-        setDetails(false);
-    }, [place])
+    // useEffect(() => {
+    //     setDetails(false);
+    // }, [place])
 
     // Scroll event listener for loading more content
     useEffect(() => {
+        if (!place || Object.keys(place).length === 0) return;
         const container = containerRef.current;
         if (!container) return;
 
         const handleScroll = (e) => {
             e.stopPropagation(); // Prevent scroll from bubbling to parent
-            console.log('aaa');
             if (isLoading || isEnd || details) return;
             
             const scrollTop = container.scrollTop;

@@ -1,6 +1,9 @@
 import { useEffect, useState, useContext } from "react";
 
+import { ErrorContext } from "@/app/page";
+
 export function useLocationInit(map, placesLib) {
+    const {setError} = useContext(ErrorContext);
     const [locationInit, setLocationInit] = useState(false);
 
     useEffect(() => {
@@ -21,7 +24,7 @@ export function useLocationInit(map, placesLib) {
                 }
             );
         } else {
-            console.log("Geolocation is not supported by this browser.");
+            setError("Geolocation is not supported by this browser. Please enable location access.");
         }
         
     }, [map, placesLib]);

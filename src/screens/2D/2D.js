@@ -37,9 +37,7 @@ const TwoDimensionalMap = () => {
     const [visible, setVisible] = useState(false);
     const [is2D, setIs2D] = useState(true);
 
-    const [selectedPos, setSelectedPos] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(-1);
-    const [streetViewAvailable, setStreetViewAvailable] = useState(false);
 
     const [isSmall, setIsSmall] = useState(true);
     const [queryText, setQueryText] = useState(smallMapQuery);
@@ -51,10 +49,9 @@ const TwoDimensionalMap = () => {
     const [panelObject, setPanelObject] = useState({});
     const [artwork, setArtwork] = useState({});
 
-    
     const [toQuery, setToQuery] = useState(true);
     const [isEnd, setIsEnd] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);;
 
     const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, IMAGE_NUMBER, true, IMAGE_NUMBER, true);
     
@@ -99,7 +96,6 @@ const TwoDimensionalMap = () => {
         }
         // Reset selected Marker and Position
         setSelectedMarker(-1);
-        setSelectedPos(null);
         // Load target
         const svc = new placesLib.PlacesService(map);
         const bounds = map.getBounds();
@@ -123,6 +119,7 @@ const TwoDimensionalMap = () => {
     }
 
     const markers = useMemo(() => {
+        if (!pinned) return [];
         const Keys = {}
         const getKey = (address, index) => {
             let key = address?.replace(/[^0-9A-Za-z]/, '-')
@@ -145,8 +142,10 @@ const TwoDimensionalMap = () => {
                     position={place.geometry.location} 
                     key={getKey(place.formatted_address, index)}
                     onClick={() => {
+                        if (!map) return;
+                        const streetView = map.getStreetView();
+                        streetView.setPosition(place.geometry.location);
                         setPanelObject(place);
-                        setSelectedPos(place.geometry.location);
                         setSelectedMarker(index);
                         setVisible(true);
                     }}
@@ -183,28 +182,20 @@ const TwoDimensionalMap = () => {
     }, [queryText, locationInit]);
 
     useEffect(() => {
-        if (!map) return;
-        const streetView = map.getStreetView();
-        if (selectedPos !== null && streetView) {
-            streetView.setPosition(selectedPos);
-        }
-    }, [selectedPos]);
-
-    useEffect(() => {
         if (!map) return; 
         const streetView = map.getStreetView();
-        if (!is2D && isSmall && streetViewAvailable) {
+        if (!is2D && isSmall) {
             streetView.setVisible(true);  
             setLoadingEnabled(false);     
         } else {
             streetView.setVisible(false);
         }
-    }, [is2D, streetViewAvailable]);
+    }, [is2D]);
 
 
     useEffect(() => {
-        if (!placesLib || !map) return;
-        // Set Listeners
+        if (!map) return;
+        // Set Map Listeners
         map.addListener('zoom_changed', () => {
             const zoom = map.getZoom();
             if (!loadingEnabled) {
@@ -220,28 +211,20 @@ const TwoDimensionalMap = () => {
             setVisible(false);
             setLoadingEnabled(true);
         });
-    }, [map, placesLib]);
 
-    useEffect(() => {
-        if (!map) return; 
+        // Set StreetView Listeners
         const streetView = map.getStreetView();
         streetView.setOptions(STREETVIEW_OPTIONS);
         streetView.setZoom(0);
-        const pov = streetView.getPov();
-        streetView.addListener("pano_changed", () => {
-            setStreetViewAvailable(true);
-        });
         streetView.addListener("status_changed", () => {
-            if (streetView.getStatus() !== "OK") {
+            const streetViewAvailable = (streetView.getStatus() == "OK");
+            if (!streetViewAvailable) {
                 setError("3D_VIEW_NOT_AVAILABLE");
-                setStreetViewAvailable(false);
                 setIs2D(true);
-            } else {
-                setStreetViewAvailable(true);
             }
-        });
+        })
         streetView.addListener("pov_changed", () => {
-            if (!is2D) setVisible(false);
+            if(streetView.getVisible()) setVisible(false);
             const pov = streetView.getPov();
             if (pov.zoom < STREETVIEW_MIN_ZOOM) {
                 pov.zoom = STREETVIEW_MIN_ZOOM;
@@ -274,12 +257,14 @@ const TwoDimensionalMap = () => {
                 handleZoomOut={handleZoomOut}
             />
             {
-                isSmall && selectedPos !== null && (
-                    <SwitchButton onClick={async () => {
-                        setIs2D(prev => !prev);
-                        setStreetViewAvailable(true);
-                        setVisible(false);
-                    }} />
+                isSmall && (panelObject && Object.keys(panelObject).length > 0) && (
+                    <SwitchButton 
+                        place={panelObject}
+                        onClick={async () => {
+                            setIs2D(prev => !prev);
+                            setVisible(false);
+                        }}
+                    />
                 )
             }
             <button 

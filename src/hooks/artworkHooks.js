@@ -27,37 +27,26 @@ export function useArtworks(
     const [artworks, setArtworks] = useState([]);
 
     // Set Regions and Ids, if the there are no artworks about the current region, then search for artworks in larger region
-    const [currRegion, setCurrRegion] = useState({
-        local: null,
-        county: null,
-        state: null
-    });
+    const [currRegion, setCurrRegion] = useState({});
     const [currGallary, setCurrGallary] = useState(0);
-    const [ids, setIds] = useState({
-        local: [],
-        county: [],
-        state: []
-    });
+    const [ids, setIds] = useState({});
+    const [idInit, setIdInit] = useState(false);
 
     // Reinit Artwork when place changes
     useEffect(() => {
-        console.log("Init map panel");
+        if (!map || !placesLib) return;
+            
         // Reset Everything upon place change
+        console.log("Init map panel"); 
         setArtworks([]);
         setToQuery(true);
         setIsEnd(false);
         setIsLoading(false);
-        setIds({
-            local: [],
-            county: [],
-            state: []
-        });
-        setCurrRegion({
-            local: null,
-            county: null,
-            state: null
-        });
-        if (!map || !placesLib) return;
+        setIds({});
+        setIdInit(false);
+        setCurrRegion({});
+
+        // Query Regions
         if (place && Object.keys(place).length) {
             let local = '';
             let county = '';
@@ -86,10 +75,12 @@ export function useArtworks(
             }
             setCurrRegion({local, county, state});
         }
-    }, [map, placesLib, place]);
+    }, [place]);
 
     useEffect(() => {
+        if (!currRegion || Object.keys(currRegion).length === 0) return;
         async function fetchIDsAll() {
+            console.log('Fetching Ids');
             const newIds = {...ids};
             for (let region of REGION_TYPES){
                 const location = currRegion[region];
@@ -104,12 +95,14 @@ export function useArtworks(
                 newIds[region] = artworkIds;
             }
             setIds(newIds);
+            setIdInit(true);
         }
         fetchIDsAll();
     }, [currRegion]);
 
 
     const rs = useMemo(() => {
+        if (!idInit) return null;
         console.log("Selector Init: ", ids);
         if (ids?.local?.length) {
             setCurrGallary(0);
@@ -127,10 +120,10 @@ export function useArtworks(
             return new RandomSelector(ids.state);
         }
         return null;
-    }, [ids]);
+    }, [idInit, ids]);
 
     useEffect(() => {
-        if (!ids) return;
+        if (!idInit) return;
         if (rs && toQuery) {
             setIsLoading(true);
             const fetchArtworks = async (ids) => {
