@@ -17,7 +17,6 @@ import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import MapPanel from "../../components/MapPanel/MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
-import { generateCameraFOVTransforms } from "@/common/getRandomPositions";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
@@ -53,7 +52,16 @@ const TwoDimensionalMap = () => {
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);;
 
-    const artworks = useArtworks(map, placesLib, panelObject, toQuery, setToQuery, setIsLoading, setIsEnd, setError, IMAGE_NUMBER, true, IMAGE_NUMBER, true);
+    const artworks = useArtworks(
+        map, placesLib, panelObject, toQuery, setToQuery, 
+        setIsLoading, setIsEnd, setError, 
+        {
+            "PAGE_SIZE": IMAGE_NUMBER, 
+            "limitSize": true, 
+            "size": IMAGE_NUMBER,
+            "byDate": false,
+        }
+    );
     
     const handleZoomIn = () => {
         if (map) {
@@ -152,8 +160,8 @@ const TwoDimensionalMap = () => {
                 >
                     <Pin
                         background={selectedMarker == index ? 'red' : 'blue'}
-                        borderColor={'#006425'}
-                        glyphColor={'#60d98f'}
+                        borderColor={'#fff'}
+                        glyphColor={'#fff'}
                     />
                 </AdvancedMarker>
                 )
@@ -267,11 +275,19 @@ const TwoDimensionalMap = () => {
                     />
                 )
             }
-            <button 
-                className="bg-gray-100 dark:bg-gray-800 rounded-full w-32 h-32 flex items-center justify-center absolute top-5 right-5 z-5 disabled:invisible"
-                onClick={getMarkers}
-                disabled={!loadingEnabled}
-            >Load More</button>
+            {loadingEnabled && is2D &&
+                (<div 
+                    className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-xs rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
+                >
+                    <button 
+                        className="flex items-center gap-2"
+                        onClick={getMarkers}
+                        disabled={!loadingEnabled}
+                    >
+                        search more in this area
+                    </button>
+                </div>)
+            }
             <LeftPanel visible={visible} setVisible={setVisible} transparent={isSmall && !is2D}>
                 {is2D ? 
                     <MapPanel place={panelObject} isSmall={isSmall} /> : 

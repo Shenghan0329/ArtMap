@@ -52,7 +52,72 @@ const getValidUrl = async (artwork, sizes=['primaryImageLarge', 'primaryImageMed
     return './sample-img.jpg';
 }
 
-export {getArtworkById, getArtworksByQuery, getImageById, getValidUrl};
+/**
+ * Simplified version that only checks if artwork creation overlaps with the range
+ * @param {number} from - Start year (inclusive)
+ * @param {number} to - End year (inclusive) 
+ * @param {Object} options - Additional options
+ * @returns {Promise} - API response with artworks
+ */
+
+async function searchArtworksByTimeRange(from, to, options = {}) {
+    const {
+        searchTerm = "*",
+        limit = 10,
+        page = 1,
+        publicDomainOnly = false
+    } = options;
+    
+    const baseUrl = "https://api.artic.edu/api/v1/artworks/search";
+    
+    // Build the query object that will be passed as params
+    const queryObj = {
+        q: searchTerm,
+        query: {
+            bool: {
+                must: [
+                    {
+                        range: {
+                            date_start: {
+                                gte: from,
+                                lte: to
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        limit: limit,
+        page: page
+    };
+    
+    // Add public domain filter if requested
+    if (publicDomainOnly) {
+        queryObj.query.bool.must.push({
+            term: {
+                is_public_domain: true
+            }
+        });
+    }
+    
+    // The API expects the entire query as a JSON string in the 'params' parameter
+    const params = new URLSearchParams({
+        params: JSON.stringify(queryObj)
+    });
+    
+    const url = `${baseUrl}?${params.toString()}`;
+    
+    try {
+        const response = await fetch(url);
+        const res = await response.json();
+        return res.data;
+    } catch (error) {
+        console.error('Error searching artworks:', error);
+        throw error;
+    }
+}
+
+export {getArtworkById, getArtworksByQuery, getImageById, getValidUrl, searchArtworksByTimeRange};
 
 // {
 // data: {

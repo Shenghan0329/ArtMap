@@ -66,9 +66,9 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
             className="fixed top-4 right-12 z-50 px-2 py-1 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white text-xs rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
             onClick={() => setDetails(false)}
         >
-        <div className="flex items-center gap-2">
-            {is3D ? 'Reload Gallery' : 'Back to Gallery'}
-        </div>
+            <div className="flex items-center gap-2">
+                {is3D ? 'Reload Gallery' : 'Back to Gallery'}
+            </div>
         </div>
         <div className={`flex ${flexDir} w-full max-[768px]:flex-col`}>
             {/* Image Section */}
@@ -88,7 +88,7 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
             </div>
 
             {/* Content Section */}
-            <div className={`w-[33vw] max-[768px]:w-[100vw] max-[768px]:h-auto ${contentHeight} p-8 overflow-scroll`}>
+            <div className={`${description? 'w-[33vw]' : 'w-[40vw]'} max-[768px]:w-[100vw] max-[768px]:h-auto ${contentHeight} p-8 overflow-scroll`}>
             <div className="space-y-6">
                 {/* Title and Reference */}
                 <div className={`font-bold ${primaryTextClass}`}>

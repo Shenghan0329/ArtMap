@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { regionQuery } from "@/constants/google_map_queries";
 import RandomSelector from "@/common/RandomSelector";
 import getState from "@/common/getState";
+import { useDebounced } from "./generalHooks";
 
-import { getArtworkById, getArtworksByQuery } from "@/api/api";
+import { getArtworkById, getArtworksByQuery, searchArtworksByTimeRange } from "@/api/api";
 
 const MAX_SIZE = 96;
 const REGION_TYPES = ['local', 'county','state'];
@@ -21,10 +22,18 @@ const REGION_TYPES = ['local', 'county','state'];
 export function useArtworks(
     map, placesLib, place, 
     toQuery, setToQuery, 
-    setIsLoading, setIsEnd, setError, 
-    PAGE_SIZE = 6, limitSize = false, size = 3,
+    setIsLoading, setIsEnd, setError, options = {
+        "PAGE_SIZE": 6, 
+        "limitSize": false, 
+        "byDate": false,
+        "from": 1900,
+        "to": 2000,
+    }
 ) {
     const [artworks, setArtworks] = useState([]);
+    const { PAGE_SIZE, limitSize, byDate, from, to, reset } = options;
+    const dFrom = useDebounced(from, 500);
+    const dTo = useDebounced(to, 500);
 
     // Set Regions and Ids, if the there are no artworks about the current region, then search for artworks in larger region
     const [currRegion, setCurrRegion] = useState({});
@@ -37,7 +46,7 @@ export function useArtworks(
         if (!map || !placesLib) return;
             
         // Reset Everything upon place change
-        console.log("Init map panel"); 
+        console.log("Init Artworks panel"); 
         setArtworks([]);
         setToQuery(true);
         setIsEnd(false);
@@ -45,6 +54,7 @@ export function useArtworks(
         setIds({});
         setIdInit(false);
         setCurrRegion({});
+        if (rs) rs.reset([]);
 
         // Query Regions
         if (place && Object.keys(place).length) {
@@ -75,17 +85,33 @@ export function useArtworks(
             }
             setCurrRegion({local, county, state});
         }
-    }, [place]);
+    }, [place, dFrom, dTo]);
 
     useEffect(() => {
         if (!currRegion || Object.keys(currRegion).length === 0) return;
         async function fetchIDsAll() {
-            console.log('Fetching Ids');
+            console.log('Fetching Artwork Ids');
             const newIds = {...ids};
             for (let region of REGION_TYPES){
                 const location = currRegion[region];
-                if (!location) continue;
-                const artworks = await getArtworksByQuery(`q=${location}&limit=${MAX_SIZE}`);
+                if (location === '') {
+                    newIds[region] = []
+                    continue;
+                }
+                let artworks = [];
+                if (!byDate) {
+                    artworks = await getArtworksByQuery(`q=${location}&limit=${MAX_SIZE}`);
+                } else {
+                    artworks = await searchArtworksByTimeRange(
+                        dFrom, dTo, 
+                        {
+                            "searchTerm": location,
+                            "limit": MAX_SIZE,
+                            "page": 1,
+                            "publicDomainOnly": true
+                        }
+                    );
+                }
                 if (artworks?.error) {
                     setError(artworks?.error + ': ' + artworks?.detail);
                     newIds[region] = [];
@@ -103,7 +129,7 @@ export function useArtworks(
 
     const rs = useMemo(() => {
         if (!idInit) return null;
-        console.log("Selector Init: ", ids);
+        console.log("Artwork Random Selector Init: ", ids);
         if (ids?.local?.length) {
             setCurrGallary(0);
             setToQuery(true);

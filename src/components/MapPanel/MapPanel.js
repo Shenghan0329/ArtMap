@@ -11,18 +11,28 @@ import { useArtworks } from "@/hooks/artworkHooks";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import ArtworkImage from "@/components/ArtworkImage/ArtworkImage";
 
-const MapPanel = ({place, isSmall=false}) => {
+const MapPanel = ({place, isSmall=true}) => {
     const map = useMap();
     const placesLib = useMapsLibrary('places');
     const { error, setError } = useContext(ErrorContext);
 
-    const [time, setTime] = useState(2025);
+    const [time, setTime] = useState([1900, 2000]);
     const [details, setDetails] = useState(false);
     const [toQuery, setToQuery] = useState(true);
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const artworks = useArtworks(map, placesLib, place, toQuery, setToQuery, setIsLoading, setIsEnd, setError);
+    const artworks = useArtworks(
+        map, placesLib, place, toQuery, setToQuery, 
+        setIsLoading, setIsEnd, setError, 
+        {
+            "PAGE_SIZE": 6,
+            "limitSize": false, 
+            "byDate": !isSmall,
+            "from": time[0] ? time[0] : 1900,
+            "to": time[1] ? time[1] : 2000,
+        }
+    );
     const [selectedArtwork, setSelectedArtwork] = useState({});
 
     const containerRef = useRef(null);
@@ -78,36 +88,30 @@ const MapPanel = ({place, isSmall=false}) => {
         {details ? 
             (<ArtworkDisplay artwork={selectedArtwork} setDetails={setDetails}/>)
         : (
-            <div className="border border-gray-200 w-[33vw] max-[768px]:w-[100vw] h-screen">
-                <div ref={containerRef} className={`p-4 overflow-y-auto overflow-x-hidden w-full ${isSmall ? 'h-[15vh]' : 'h-[20vh]'} flex flex-col`}>
+            <div className="border border-gray-200 w-[40vw] max-[1024px]:w-[50vw] max-[768px]:w-[100vw] h-screen">
+                <div ref={containerRef} className={`p-4 overflow-y-auto overflow-x-hidden w-full ${isSmall ? 'h-[15vh]' : 'h-[20vh]'} flex flex-col justify-between`}>
                     {!isSmall && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 w-full">
                             {/* Timeline Section */}
-                            <div>
                                 <TimeLine time={time} setTime={setTime}/>
-                            </div>
-                            
-                            {/* Year Display */}
-                            <div className="text-lg font-medium text-gray-700">
-                                Year: <span className="font-bold text-gray-900">{time}</span>
-                            </div>
                         </div>
                     )}
-                    
-                    {/* Title Section - matching ArtworkDisplay style */}
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+                                                
+                    {/* Year Display */}
+                    <div className="text-md font-medium text-gray-700 flex flex-row justify-between">
+                        <h1 className="w-1/2 text-lg mt-2 font-bold text-gray-900 leading-tight">
                             {place.name}
                         </h1>
-                        <p className="text-gray-600 mt-1">Artworks collection</p>
+                        {!isSmall &&<p className="w-1/2 text-gray-600 mt-2">Year: <span className="font-bold">{time[0] + ' - ' + time[1]}</span></p>}
                     </div>
+                    
                 </div>
                 <div ref={containerRef} className={`overflow-y-auto h-full ${isSmall ? 'max-h-[75vh]' : 'max-h-[70vh]'} flex flex-row flex-wrap gap-2`}>
                     {artworks.map((item, index) => {
                         
                         return (
                             <div                          
-                                className="relative w-full lg:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden"                          
+                                className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden"                          
                                 key={item?.title + index}
                                 onClick={() => {
                                     setSelectedArtwork(item);

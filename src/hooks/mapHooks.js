@@ -20,7 +20,7 @@ export function useLocationInit(map, placesLib) {
                     setLocationInit(true);
                 },
                 (err) => {
-                    console.log(err);
+                    setError(err);
                 }
             );
         } else {
