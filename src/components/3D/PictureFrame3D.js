@@ -426,8 +426,7 @@ function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDEN
             height: `${pos.height}px`,
             pointerEvents: 'auto',
             cursor: 'pointer',
-            background: 'rgba(0, 0, 0, 0.1)', // Change to 'rgba(255,0,0,0.1)' for testing
-            // border: '1px solid rgba(255,0,0,0.3)', // Uncomment for testing
+            background: 'transparent',
           }}
           onClick={pos.onClick}
         />

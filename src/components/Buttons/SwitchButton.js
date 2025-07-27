@@ -1,7 +1,7 @@
 "use client"
 import Image from 'next/image';
 
-const SwitchButton = ({onClick, place }) => {
+const SwitchButton = ({onClick, place, text }) => {
     return (
     <button
         onClick={onClick}
@@ -12,7 +12,7 @@ const SwitchButton = ({onClick, place }) => {
         "
     >
         <SwitchButtonImage place={place}/>
-        <DestinationCard label={'Street View'}/>
+        <DestinationCard label={text}/>
     </button>
 
     )

@@ -52,16 +52,16 @@ const TwoDimensionalMap = () => {
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);;
 
-    // const artworks = useArtworks(
-    //     map, placesLib, panelObject, toQuery, setToQuery, 
-    //     setIsLoading, setIsEnd, setError, 
-    //     {
-    //         "PAGE_SIZE": IMAGE_NUMBER, 
-    //         "limitSize": true, 
-    //         "size": IMAGE_NUMBER,
-    //         "byDate": false,
-    //     }
-    // );
+    const artworks = useArtworks(
+        map, placesLib, panelObject, toQuery, setToQuery, 
+        setIsLoading, setIsEnd, setError, 
+        {
+            "PAGE_SIZE": IMAGE_NUMBER, 
+            "limitSize": true, 
+            "size": IMAGE_NUMBER,
+            "byDate": false,
+        }
+    );
     
     const handleZoomIn = () => {
         if (map) {
@@ -268,6 +268,7 @@ const TwoDimensionalMap = () => {
                 isSmall && (panelObject && Object.keys(panelObject).length > 0) && (
                     <SwitchButton 
                         place={panelObject}
+                        text={is2D ? "Street View" : "2D Map"}
                         onClick={async () => {
                             setIs2D(prev => !prev);
                             setVisible(false);
