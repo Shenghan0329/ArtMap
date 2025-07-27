@@ -129,7 +129,7 @@ export function useArtworks(
 
     const rs = useMemo(() => {
         if (!idInit) return null;
-        console.log("Artwork Random Selector Init: ", ids);
+        console.log("Artwork Random Selector Initing: ", ids);
         if (ids?.local?.length) {
             setCurrGallary(0);
             setToQuery(true);
@@ -145,6 +145,7 @@ export function useArtworks(
             setToQuery(true);
             return new RandomSelector(ids.state);
         }
+        setIsEnd(true);
         return null;
     }, [idInit, ids]);
 
@@ -172,7 +173,7 @@ export function useArtworks(
                             }
                         }
                         // Find artworks in next level of region
-                        rs.reset(ids[REGION_TYPES[currGallary + 1]]);
+                        rs.reset(ids[REGION_TYPES[cg + 1]]);
                         setCurrGallary(prev => prev + 1);
                         cg += 1;
                         continue;

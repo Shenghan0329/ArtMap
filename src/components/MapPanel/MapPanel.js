@@ -80,8 +80,6 @@ const MapPanel = ({place, isSmall=true}) => {
         };
     }, [isLoading, isEnd, details]);
 
-    
-    
     return (<>
         {details ? 
             (<ArtworkDisplay artwork={selectedArtwork} setDetails={setDetails}/>)
@@ -105,26 +103,55 @@ const MapPanel = ({place, isSmall=true}) => {
                     
                 </div>
                 <div ref={containerRef} className={`overflow-y-auto h-full ${isSmall ? 'max-h-[75vh]' : 'max-h-[70vh]'} flex flex-row flex-wrap gap-2`}>
-                    {artworks.map((item, index) => {
+                    {artworks?.length ? 
+                        artworks.map((item, index) => {
                         
-                        return (
-                            <div                          
-                                className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden"                          
-                                key={item?.title + index}
-                                onClick={() => {
-                                    setSelectedArtwork(item);
-                                    setDetails(true);
-                                }}                     
-                            >                         
-                                <ArtworkImage artwork={item} />
-                                <div className="absolute inset-0 bg-black/10"></div>
-                                <div className="absolute bottom-2 right-2 text-white text-sm text-right">
-                                    <div className="font-bold">{item?.title?.length <= 66 ? item?.title : item?.title?.slice(0, 60) + '...'}</div>
-                                    <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
-                                </div>                     
-                            </div>
-                        )
-                    })}
+                            return (
+                                <div                          
+                                    className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden"                          
+                                    key={item?.title + index}
+                                    onClick={() => {
+                                        setSelectedArtwork(item);
+                                        setDetails(true);
+                                    }}                     
+                                >                         
+                                    <ArtworkImage artwork={item} />
+                                    <div className="absolute inset-0 bg-black/10"></div>
+                                    <div className="absolute bottom-2 right-2 text-white text-sm text-right">
+                                        <div className="font-bold">{item?.title?.length <= 66 ? item?.title : item?.title?.slice(0, 60) + '...'}</div>
+                                        <div>{item?.artist_titles.length ? item?.artist_titles[0] : 'Unknown Artist'}</div>
+                                    </div>                     
+                                </div>
+                            )
+                        }) : [0, 0, 0, 0, 0, 0].map((item, index) => {
+                            return (
+                                <div                          
+                                    className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden animate-pulse"                          
+                                    key={`loading-${index}`}
+                                >                         
+                                    {/* Image placeholder */}
+                                    <div className="absolute inset-0 bg-gray-200">
+                                        <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer"></div>
+                                    </div>
+                                    
+                                    {/* Overlay */}
+                                    <div className="absolute inset-0 bg-black/10"></div>
+                                    
+                                    {/* Text placeholder */}
+                                    <div className="absolute bottom-2 right-2 text-right space-y-2">
+                                        {/* Title placeholder */}
+                                        <div className="space-y-1">
+                                            <div className="h-4 w-32 bg-white/80 rounded animate-pulse"></div>
+                                            <div className="h-4 w-24 bg-white/80 rounded animate-pulse"></div>
+                                        </div>
+                                        {/* Artist placeholder */}
+                                        <div className="h-3 w-20 bg-white/70 rounded animate-pulse"></div>
+                                    </div>                     
+                                </div>
+                            )
+                        })
+                    
+                    }
                 </div>
                 {isLoading && (
                     <div className="flex justify-center py-4">

@@ -110,10 +110,9 @@ async function searchArtworksByTimeRange(from, to, options = {}) {
     try {
         const response = await fetch(url);
         const res = await response.json();
-        return res.data;
+        return res?.data ? res.data : res;
     } catch (error) {
-        console.error('Error searching artworks:', error);
-        throw error;
+        return {error: 'Error searching artworks:', error};
     }
 }
 
