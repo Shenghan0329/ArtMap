@@ -48,7 +48,7 @@ const TwoDimensionalMap = () => {
     const [panelObject, setPanelObject] = useState({});
     const [artwork, setArtwork] = useState({});
 
-    const [toQuery, setToQuery] = useState(true);
+    const [toQuery, setToQuery] = useState(false);
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);;
 
@@ -246,7 +246,7 @@ const TwoDimensionalMap = () => {
             }
         });
         streetView.addListener("position_changed", () => {
-            setToQuery(true);
+            if(!is2D) setToQuery(true);
         });
     }, [map]);
 

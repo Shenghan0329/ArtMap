@@ -48,7 +48,7 @@ export function useArtworks(
         // Reset Everything upon place change
         console.log("Init Artworks panel"); 
         setArtworks([]);
-        setToQuery(true);
+        setToQuery(false);
         setIsEnd(false);
         setIsLoading(false);
         setIds({});

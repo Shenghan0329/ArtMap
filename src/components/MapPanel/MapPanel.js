@@ -18,7 +18,7 @@ const MapPanel = ({place, isSmall=true}) => {
 
     const [time, setTime] = useState([1900, 2000]);
     const [details, setDetails] = useState(false);
-    const [toQuery, setToQuery] = useState(true);
+    const [toQuery, setToQuery] = useState(false);
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
