@@ -5,6 +5,45 @@
   --foreground: #171717;
 }
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-dark {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+  }
+
+  .scrollbar-light {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar .scrollbar-light::-webkit-scrollbar{
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-track .scrollbar-light::-webkit-scrollbar-track{
+    background: transparent;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb .scrollbar-light::-webkit-scrollbar-thumb{
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover .scrollbar-light::-webkit-scrollbar-thumb:hover{
+    background: rgba(0, 0, 0, 0.4);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -115,7 +115,7 @@ const TwoDimensionalMap = () => {
             'bounds': bounds,
             ...queryText
         }, (res, status, pagination) => {
-            if (maxResults >= 0 && status == 'OK') {
+            if (maxResults > 0 && status == 'OK') {
                 queryToPlaces(res, status, pagination);
                 maxResults -= res.length;
             } else {
@@ -278,7 +278,7 @@ const TwoDimensionalMap = () => {
             }
             {loadingEnabled && is2D &&
                 (<div 
-                    className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-xs rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
+                    className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-md rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
                 >
                     <button 
                         className="flex items-center gap-2"
@@ -286,6 +286,19 @@ const TwoDimensionalMap = () => {
                         disabled={!loadingEnabled}
                     >
                         search more in this area
+                    </button>
+                </div>)
+            }
+            {!canPin && is2D &&
+                (<div 
+                    className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-md rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
+                >
+                    <button 
+                        className="flex items-center gap-2"
+                        onClick={getMarkers}
+                        disabled={!loadingEnabled}
+                    >
+                        searching attractions in this area......
                     </button>
                 </div>)
             }

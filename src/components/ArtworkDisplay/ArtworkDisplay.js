@@ -53,7 +53,7 @@ const ArtworkDisplay = ({ artwork, setDetails, is3D = false }) => {
     const flexDir = description ? 'flex-row' : 'flex-col';
 
     // Conditional styling for 3D mode
-    const backgroundClass = is3D ? 'bg-black/50' : 'bg-white';
+    const backgroundClass = is3D ? 'bg-black/50 scrollbar-thin scrollbar-dark' : 'bg-white scrollbar-light';
     const primaryTextClass = is3D ? 'text-white' : 'text-gray-900';
     const secondaryTextClass = is3D ? 'text-gray-300' : 'text-gray-500';
     const tertiaryTextClass = is3D ? 'text-gray-300' : 'text-gray-600';
