@@ -92,14 +92,6 @@ export const metadata = {
   category: 'Art & Culture',
   classification: 'Art Discovery Platform',
   
-  // Viewport and technical metadata
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-  
   // App-specific metadata
   applicationName: 'ArtMap',
   appleWebApp: {

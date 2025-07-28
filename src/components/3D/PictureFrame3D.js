@@ -90,6 +90,18 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
         onPointerMissed={(e)=>{
           e.target.style.pointerEvents = 'none';
         }}
+        fallback={
+          (<div 
+              className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-md rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
+          >
+              <div 
+                  className="flex items-center gap-2"
+              >
+                Sorry, webGL is not supported for your browser, please enalbe webGL.
+                Reference: https://get.webgl.org/
+              </div>
+          </div>)
+        }
         shadows
       >
         {backgroundColor !== 'transparent' && <color attach="background" args={[backgroundColor]} />}
@@ -224,8 +236,9 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
     >
       {images.map((props, index) => {
         return(<Frame 
-          key={getUuid(props.artwork?.title + props.artwork?.id)} 
+          key={getUuid(props.artwork?.title + props.artwork?.id + index)} 
           {...props} 
+          index={index}
           selectedId={selectedId} 
           frameWidth={frameWidth} 
           frameHeight={frameHeight}
@@ -236,13 +249,13 @@ function Frames({ images, frameWidth = 1, frameHeight = GOLDENRATIO, q = new THR
   )
 }
 
-function Frame({ artwork, selectedId, frameWidth = 1, frameHeight = GOLDENRATIO, c = new THREE.Color(), onClick = null, ...props }) {
+function Frame({ artwork, selectedId, index, frameWidth = 1, frameHeight = GOLDENRATIO, c = new THREE.Color(), onClick = null, ...props }) {
   const image = useRef()
   const frame = useRef()
   const [hovered, hover] = useState(false)
   const [rnd, setRnd] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const name = getUuid(artwork?.title + artwork?.id)
+  const name = getUuid(artwork?.title + artwork?.id + index)
   const isActive = selectedId === name
 
   // Set random value only on client side after mount
@@ -326,7 +339,7 @@ function FrameOverlay({ images, cameraDataRef, frameWidth = 1, frameHeight = GOL
       const positions = []
       
       images.forEach((imageProps, index) => {
-        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork?.title + imageProps.artwork?.id))
+        const frameObject = scene.getObjectByName(getUuid(imageProps.artwork?.title + imageProps.artwork?.id + index))
         if (frameObject) {
           try {
             // Get the frame's world matrix

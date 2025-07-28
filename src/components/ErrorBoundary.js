@@ -36,28 +36,107 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Helper function to parse retry delay from response headers
+function getRetryDelay(response) {
+  // Check Retry-After header (standard for 429 responses)
+  const retryAfter = response.headers.get('Retry-After');
+  if (retryAfter) {
+    // Can be in seconds (number) or HTTP date format
+    const retrySeconds = parseInt(retryAfter, 10);
+    if (!isNaN(retrySeconds)) {
+      return retrySeconds * 1000; // Convert to milliseconds
+    }
+    
+    // If it's a date string, calculate the difference
+    const retryDate = new Date(retryAfter);
+    if (!isNaN(retryDate.getTime())) {
+      return Math.max(0, retryDate.getTime() - Date.now());
+    }
+  }
+  
+  // Check other common rate limit headers
+  const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+  if (rateLimitReset) {
+    const resetTime = parseInt(rateLimitReset, 10);
+    if (!isNaN(resetTime)) {
+      // Could be Unix timestamp or seconds from now
+      const resetDate = resetTime > 1000000000 ? resetTime * 1000 : Date.now() + (resetTime * 1000);
+      return Math.max(0, resetDate - Date.now());
+    }
+  }
+  
+  // Fallback: exponential backoff starting at 1 second
+  return 1000;
+}
+
+// Enhanced fetch function with retry logic
+async function fetchWithRetry(originalFetch, url, options = {}, maxRetries = 3, retryCount = 0) {
+  try {
+    const response = await originalFetch(url, options);
+    
+    if (response.status === 429 && retryCount < maxRetries) {
+      const retryDelay = getRetryDelay(response);
+      const maxDelay = 60000; // Maximum 1 minute wait
+      const actualDelay = Math.min(retryDelay, maxDelay);
+      
+      console.log(`Rate limited. Retrying in ${actualDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      // Wait for the specified delay
+      await new Promise(resolve => setTimeout(resolve, actualDelay));
+      
+      // Retry the request
+      return fetchWithRetry(originalFetch, url, options, maxRetries, retryCount + 1);
+    }
+    
+    return response;
+  } catch (error) {
+    // If it's a network error and we have retries left, try exponential backoff
+    if (retryCount < maxRetries && (
+      error.name === 'TypeError' || 
+      error.message.includes('fetch') ||
+      error.message.includes('network')
+    )) {
+      const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
+      console.log(`Network error. Retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      return fetchWithRetry(originalFetch, url, options, maxRetries, retryCount + 1);
+    }
+    
+    throw error;
+  }
+}
+
 // Wrapper to connect to your ErrorContext
 export function GlobalErrorBoundary({ children }) {
   const { setError } = useContext(ErrorContext);
 
   // Add window error listeners to catch console errors and async errors
   useEffect(() => {
-    // Override fetch to catch all network errors
+    // Override fetch to catch all network errors and handle retries
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       try {
-        const response = await originalFetch(...args);
+        const [url, options] = args;
+        const response = await fetchWithRetry(originalFetch, url, options);
+        
         if (!response.ok) {
           let errorMessage = `Request failed with status ${response.status}`;
+          
           if (response.status === 429) {
-            errorMessage = 'Too many requests. Please try again later.';
+            // If we've exhausted retries and still getting 429
+            console.log('aaa');
+            const retryAfter = response.headers.get('Retry-After');
+            errorMessage = retryAfter ? 
+              `Too many requests. Please try again in ${retryAfter} seconds.` :
+              'Too many requests. Please try again later.';
           } else if (response.status >= 500) {
             errorMessage = 'External server error. Please try again later.';
           } else if (response.status >= 400) {
-            if (args[0]?.includes('/iiif/2')) {
+            if (url?.includes('/iiif/2')) {
               // A common Error caused by Image api cache, pretend nothing happens
               console.log("Hide a trivial error.");
-              return;
+              return response; // Return the response instead of undefined
             } else {
               errorMessage = 'Request failed, please try again later';
             }
@@ -67,7 +146,12 @@ export function GlobalErrorBoundary({ children }) {
         }
         return response;
       } catch (error) {
-        setError('Network error or Server error. Please check your connection or connect admin.');
+        // Check if this is a 429 error from our retry logic
+        if (error.status === 429) {
+          setError('Rate limited after retries. Please wait before trying again.');
+        } else {
+          setError('Network error or Server error. Please check your connection or contact admin.');
+        }
         throw error;
       }
     };
