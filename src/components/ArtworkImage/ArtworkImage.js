@@ -27,7 +27,7 @@ export default function ArtworkImage({artwork, defaultImage = 'primaryImageMediu
             alt={artwork?.thumbnail?.alt_text || artwork?.title || 'Artwork'}                          
             fill={true}                             
             sizes='500px'                             
-            blurDataURL="/sample-img.jpg"                             
+            blurDataURL="/loading.gif"                             
             placeholder="blur"
             onError = {(e) => {
                 if (!failed) setHasError(true);
