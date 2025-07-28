@@ -17,10 +17,10 @@ import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import MapPanel from "../../components/MapPanel/MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
+import { THREED_IMAGE_NUMBER } from "@/constants/constants";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
-const IMAGE_NUMBER = 6;
 
 const defaultPov = {heading: 0, pitch: 0};
 
@@ -56,9 +56,9 @@ const TwoDimensionalMap = () => {
         map, placesLib, panelObject, toQuery, setToQuery, 
         setIsLoading, setIsEnd, setError, 
         {
-            "PAGE_SIZE": IMAGE_NUMBER, 
+            "PAGE_SIZE": THREED_IMAGE_NUMBER, 
             "limitSize": true, 
-            "size": IMAGE_NUMBER,
+            "size": THREED_IMAGE_NUMBER,
             "byDate": false,
         }
     );

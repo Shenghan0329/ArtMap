@@ -42,11 +42,15 @@ const getImageById = (imageId, s='md') => {
 const getValidUrl = async (artwork, sizes=['primaryImageLarge', 'primaryImageMedium', 'primaryImageSmall']) => {
     for (let i = 0; i < sizes.length; i++) {
         const size = sizes[i];
-        const res = await fetch(artwork[size]);
-        if (!res?.ok) {
+        try {
+            const res = await fetch(artwork[size]);
+            if (!res?.ok) {
+                continue;
+            } else {
+                return artwork[size];
+            }
+        } catch(e) {
             continue;
-        } else {
-            return artwork[size];
         }
     }
     return './sample-img.jpg';

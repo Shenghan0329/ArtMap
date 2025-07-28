@@ -67,7 +67,7 @@ export function GlobalErrorBoundary({ children }) {
         }
         return response;
       } catch (error) {
-        setError('Network error. Please check your connection.');
+        setError('Network error or Server error. Please check your connection or connect admin.');
         throw error;
       }
     };

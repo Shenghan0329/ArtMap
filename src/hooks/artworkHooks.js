@@ -185,8 +185,6 @@ export function useArtworks(
                         const artwork = await getArtworkById(currId);
                         if (artwork?.error) {
                             setError(artworks?.error + ': ' + artworks?.detail);
-                            setToQuery(prev => false);
-                            setIsLoading(false);
                             continue;
                         }
                         aws.push(artwork);

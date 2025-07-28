@@ -17,7 +17,7 @@ const IMAGE_NUMBER = 6;
 
 export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = THREED_IMAGE_SIZE, frameHeight = GOLDENRATIO * THREED_IMAGE_SIZE, backgroundColor = 'transparent', showFog = false}) => {
   const map = useMap()
-  const [cameraData, setCameraData] = useState(null)
+  const cameraDataRef = useRef(null)
   const [initialCameraConfig, setInitialCameraConfig] = useState({
     fov: 90,
     position: [0, 0, 0],
@@ -129,13 +129,13 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
         <CameraController map={map} />
         
         {/* Data provider for external overlay */}
-        <CameraDataProvider onUpdate={setCameraData} />
+        <CameraDataProvider onUpdate={(data) => { cameraDataRef.current = data }} />
       </Canvas>
       
       {/* External overlay with frame dimensions */}
       <FrameOverlay 
         images={images}
-        cameraData={cameraData}
+        cameraDataRef={cameraDataRef}
         frameWidth={frameWidth}
         frameHeight={frameHeight}
       />
@@ -309,15 +309,11 @@ function CameraDataProvider({ onUpdate }) {
   return null
 }
 
-function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDENRATIO }) {
+function FrameOverlay({ images, cameraDataRef, frameWidth = 1, frameHeight = GOLDENRATIO }) {
   const [framePositions, setFramePositions] = useState([])
-  const cameraDataRef = useRef(cameraData)
-  
-  // Keep camera data ref current without triggering effects
-  cameraDataRef.current = cameraData
   
   useEffect(() => {
-    let animationId
+    let animationId;
     
     const updatePositions = () => {
       const currentCameraData = cameraDataRef.current
@@ -403,7 +399,7 @@ function FrameOverlay({ images, cameraData, frameWidth = 1, frameHeight = GOLDEN
         cancelAnimationFrame(animationId)
       }
     }
-  }, [images, frameWidth, frameHeight]) // Include frame dimensions in dependencies
+  }, [images, frameWidth, frameHeight, cameraDataRef]) // Include cameraDataRef in dependencies
   
   return (
     <div style={{
