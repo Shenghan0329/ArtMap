@@ -246,7 +246,7 @@ const TwoDimensionalMap = () => {
             }
         });
         streetView.addListener("position_changed", () => {
-            if(!is2D) setToQuery(true);
+            if(streetView.getVisible()) setToQuery(true);
         });
     }, [map]);
 
