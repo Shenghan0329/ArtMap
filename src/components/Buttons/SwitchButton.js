@@ -23,7 +23,7 @@ const SwitchButtonImage = ({place}) => {
         <div className="relative aspect-square w-22 h-16 bg-gray-100">
             <Image
                 className="dark:invert"
-                src={(place?.photos && place?.photos[0]) ?.getUrl() || '/sample.jpg'}
+                src={(place?.photos && place?.photos[0]) ?.getUrl() || '/sample-img.jpg'}
                 alt="Sample Image"
                 layout="fill"
                 style={{ objectFit: 'cover' }}
