@@ -54,13 +54,15 @@ const TwoDimensionalMap = () => {
     const [isLoading, setIsLoading] = useState(false);;
 
     const artworks = useArtworks(
-        map, placesLib, panelObject, toQuery, setToQuery, 
-        setIsLoading, setIsEnd, setError, 
+        panelObject, toQuery, setToQuery, 
+        setIsLoading, setIsEnd, 
         {
             "PAGE_SIZE": THREED_IMAGE_NUMBER, 
             "limitSize": true, 
             "size": THREED_IMAGE_NUMBER,
             "byDate": false,
+            "isSmall": true,
+            "streetView": true
         }
     );
     const {getKey, clearKeys} = useKey();
@@ -195,7 +197,7 @@ const TwoDimensionalMap = () => {
             if (!loadingEnabled) {
                 setLoadingEnabled(true);
             }
-            if (zoom > 13) {
+            if (zoom > 11) {
                 setIsSmall(prev => true);
                 setQueryText(smallMapQuery);
             } else {
@@ -210,6 +212,15 @@ const TwoDimensionalMap = () => {
         map.addListener('center_changed', () => {
             setVisible(false);
             setLoadingEnabled(true);
+        });
+        map.addListener('click', (event) => {
+            const zoom = map.getZoom();
+            if (zoom < 12) {
+                // Set the clicked location as the new center
+                map.setCenter(event.latLng);
+                // Then zoom in
+                map.setZoom(zoom + 3);
+            }
         });
 
         // Set StreetView Listeners
@@ -268,6 +279,20 @@ const TwoDimensionalMap = () => {
                     />
                 )
             }
+            {
+                !isSmall && (panelObject && Object.keys(panelObject).length > 0) && (
+                    <SwitchButton 
+                        place={panelObject}
+                        text={"Zoom In"}
+                        onClick={async () => {
+                            if (!map) return;
+                            map.setCenter(panelObject.geometry?.location);
+                            map.setZoom(map.getZoom()+3);
+                            setVisible(false);
+                        }}
+                    />
+                )
+            }
             {loadingEnabled && is2D &&
                 (<div 
                     className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-md rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
@@ -290,7 +315,7 @@ const TwoDimensionalMap = () => {
                         onClick={getMarkers}
                         disabled={!loadingEnabled}
                     >
-                        searching attractions in this area......
+                        searching notable places in this area......
                     </button>
                 </div>)
             }

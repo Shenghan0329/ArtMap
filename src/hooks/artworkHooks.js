@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
-import { regionQuery } from "@/constants/google_map_queries";
+import { useState, useEffect, useMemo, useContext } from "react";
 import RandomSelector from "@/common/RandomSelector";
-import getState from "@/common/getState";
 import { useDebounced } from "./generalHooks";
+import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { ErrorContext } from "@/app/page";
 
 import { getArtworkById, getArtworksByQuery, searchArtworksByTimeRange } from "@/api/api";
 
 const MAX_SIZE = 96;
-const REGION_TYPES = ['local', 'county','state'];
 
 /*
 * @param {google.maps.Map} map - Google Map instance
@@ -19,31 +18,127 @@ const REGION_TYPES = ['local', 'county','state'];
 * @param {boolean} setIsEnd - Setter for isEnd, to indicate whether there are more artworks to fetch
 * @param {function} setError - Setter for error
 */
+const baseRegions = {
+    administrative_area_level_2: '', 
+    administrative_area_level_1: '',
+    country: ''
+};
+
 export function useArtworks(
-    map, placesLib, place, 
+    place, 
     toQuery, setToQuery, 
-    setIsLoading, setIsEnd, setError, options = {
+    setIsLoading, setIsEnd, 
+    options = {
         "PAGE_SIZE": 6, 
         "limitSize": false, 
         "byDate": false,
-        "from": 1900,
+        "from": 1600,
         "to": 2000,
+        "isSmall": false,
+        "streetView": false
     }
 ) {
+    const map = useMap();
+    const geocoder = useMapsLibrary('geocoding');
+    const placesLib = useMapsLibrary('places');
+    const {setError} = useContext(ErrorContext);
     const [artworks, setArtworks] = useState([]);
-    const { PAGE_SIZE, limitSize, byDate, from, to, reset } = options;
+    const { PAGE_SIZE, limitSize, byDate, from, to, isSmall, streetView } = options;
     const dFrom = useDebounced(from, 500);
     const dTo = useDebounced(to, 500);
 
-    // Set Regions and Ids, if the there are no artworks about the current region, then search for artworks in larger region
+    // Set Regions and Ids, using geocoding to get proper address components
     const [currRegion, setCurrRegion] = useState({});
     const [currGallary, setCurrGallary] = useState(0);
     const [ids, setIds] = useState({});
     const [idInit, setIdInit] = useState(false);
 
+    const REGION_TYPES = streetView ? 
+        ['neighborhood', 'sublocality', 'administrative_area_level_2', 'administrative_area_level_1', 'country'] 
+        : (isSmall ? ['sublocality', 'administrative_area_level_2', 'administrative_area_level_1', 'country']
+            : ['administrative_area_level_2', 'administrative_area_level_1', 'country']
+        );
+
+    // Function to extract region names from geocoding results
+    const extractRegionsFromGeocoding = (addressComponents) => {
+        const regions = streetView ? 
+            {
+                neighborhood: '',
+                sublocality: '',
+                ...baseRegions
+            } : (
+                isSmall ? {
+                    sublocality: '',
+                    ...baseRegions
+                } : baseRegions
+            );
+
+        addressComponents.forEach(component => {
+            // Check each address component type
+            if (component.types.includes('sublocality') || 
+                component.types.includes('sublocality_level_1')) {
+                regions.sublocality = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_2')) {
+                regions.administrative_area_level_2 = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_1')) {
+                regions.administrative_area_level_1 = component.long_name;
+            }
+            if (component.types.includes('country')) {
+                regions.country = component.long_name;
+            }
+        });
+
+        return regions;
+    };
+
+    // Geocode the place to get proper address components
+    const geocodePlace = async (place) => {
+        if (!geocoder || !place) return {};
+
+        return new Promise((resolve, reject) => {
+            const geocoderService = new geocoder.Geocoder();
+            
+            let request = {};
+            
+            // If we have coordinates, use them for reverse geocoding
+            if (place.geometry && place.geometry.location) {
+                request = {
+                    location: place.geometry.location
+                };
+            }
+            // Otherwise, use the place name/formatted address
+            else if (place.formatted_address) {
+                request = {
+                    address: place.formatted_address
+                };
+            }
+            else if (place.name) {
+                request = {
+                    address: place.name
+                };
+            }
+            else {
+                resolve({});
+                return;
+            }
+
+            geocoderService.geocode(request, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const regions = extractRegionsFromGeocoding(results[0].address_components);
+                    resolve(regions);
+                } else {
+                    console.warn('Geocoding failed:', status);
+                    resolve({});
+                }
+            });
+        });
+    };
+
     // Reinit Artwork when place changes
     useEffect(() => {
-        if (!map || !placesLib) return;
+        if (!map || !placesLib || !geocoder) return;
             
         // Reset Everything upon place change
         console.log("Init Artworks panel"); 
@@ -56,69 +151,71 @@ export function useArtworks(
         setCurrRegion({});
         if (rs) rs.reset([]);
 
-        // Query Regions
+        // Query Regions using geocoding
         if (place && Object.keys(place).length) {
-            let local = '';
-            let county = '';
-            let state = '';
-            // Search for local
-            if (place?.name) {
-                local = place.name;
-            } else {
-                setError('STATE_NOT_FOUND');
-            }
-            const bounds = map.getBounds();
-            const svc = new placesLib.PlacesService(map);
-            // Search for county
-            svc.nearbySearch({
-                'bounds': bounds,
-                ...regionQuery, 
-            }, (res, status, pagination) => {
-                if (status == 'OK' && res.length > 0) {
-                    county = res[0].name;
-                }
+            geocodePlace(place).then(regions => {
+                setCurrRegion(regions);
+            }).catch(error => {
+                setError('GEOCODING_FAILED');
             });
-            // Search for state
-            if (place?.vicinity) {
-                const st = getState(place.vicinity);
-                state = st;
-            }
-            setCurrRegion({local, county, state});
         }
-    }, [place, dFrom, dTo]);
+    }, [place, dFrom, dTo, geocoder]);
 
     useEffect(() => {
         if (!currRegion || Object.keys(currRegion).length === 0) return;
+        
         async function fetchIDsAll() {
-            console.log('Fetching Artwork Ids');
             const newIds = {...ids};
-            for (let region of REGION_TYPES){
-                const location = currRegion[region];
-                if (location === '') {
-                    newIds[region] = []
+            
+            for (let regionType of REGION_TYPES){
+                const location = currRegion[regionType];
+                if (!location || location === '') {
+                    newIds[regionType] = [];
                     continue;
                 }
+                
                 let artworks = [];
-                if (!byDate) {
-                    artworks = await getArtworksByQuery(`q=${location}&limit=${MAX_SIZE}`);
-                } else {
-                    artworks = await searchArtworksByTimeRange(
-                        dFrom, dTo, 
-                        {
-                            "searchTerm": location,
-                            "limit": MAX_SIZE,
-                            "page": 1,
-                            "publicDomainOnly": true
-                        }
-                    );
+                try {
+                    let fromYear = 0;
+                    let toYear = 3000;
+                    if (byDate) {
+                        fromYear = dFrom;
+                        toYear = dTo;
+                    } 
+                    if (currRegion?.country) {
+                        artworks = await searchArtworksByTimeRange(
+                            fromYear, toYear, 
+                            {
+                                "searchTerm": location,
+                                "limit": MAX_SIZE,
+                                "page": 1,
+                                "publicDomainOnly": true,
+                                "placeOfOrigin": currRegion.country
+                            }
+                        );
+                    } else {
+                        artworks = await searchArtworksByTimeRange(
+                            dFrom, dTo, 
+                            {
+                                "searchTerm": location,
+                                "limit": MAX_SIZE,
+                                "page": 1,
+                                "publicDomainOnly": true,
+                            }
+                        );
+                    }
+                    if (artworks?.error) {
+                        setError(artworks?.error + ': ' + artworks?.detail);
+                        newIds[regionType] = [];
+                        continue;
+                    }
+                    
+                    const artworkIds = artworks.map((artwork, idx) => artwork?.id);
+                    newIds[regionType] = artworkIds;
+                } catch (error) {
+                    console.error(`Error fetching artworks for ${regionType}:`, error);
+                    newIds[regionType] = [];
                 }
-                if (artworks?.error) {
-                    setError(artworks?.error + ': ' + artworks?.detail);
-                    newIds[region] = [];
-                    continue;
-                }
-                const artworkIds = artworks.map((artwork, idx) => artwork?.id);
-                newIds[region] = artworkIds;
             }
             setIds(newIds);
             setIdInit(true);
@@ -126,25 +223,20 @@ export function useArtworks(
         fetchIDsAll();
     }, [currRegion]);
 
-
     const rs = useMemo(() => {
         if (!idInit) return null;
         console.log("Artwork Random Selector Initing: ", ids);
-        if (ids?.local?.length) {
-            setCurrGallary(0);
-            setToQuery(true);
-            return new RandomSelector(ids.local);
+        
+        // Try each region type in order of preference
+        for (let i = 0; i < REGION_TYPES.length; i++) {
+            const regionType = REGION_TYPES[i];
+            if (ids[regionType]?.length) {
+                setCurrGallary(i);
+                setToQuery(true);
+                return new RandomSelector(ids[regionType]);
+            }
         }
-        if (ids?.county?.length) {
-            setCurrGallary(1);
-            setToQuery(true);
-            return new RandomSelector(ids.county);
-        }
-        if (ids?.state?.length) {
-            setCurrGallary(2);
-            setToQuery(true);
-            return new RandomSelector(ids.state);
-        }
+        
         setIsEnd(true);
         return null;
     }, [idInit, ids]);
@@ -154,16 +246,16 @@ export function useArtworks(
         if (rs && toQuery) {
             setIsLoading(true);
             const fetchArtworks = async (ids) => {
-                let artworksLeft = 0;
-                artworksLeft = PAGE_SIZE;
+                let artworksLeft = PAGE_SIZE;
                 const aws = [];
                 let cg = currGallary;
+                
                 while (artworksLeft > 0) {
                     const selectedIds = rs.select(1);
                     // Current selector is empty
                     if (selectedIds.length === 0) {
-                        // Run out of artworks
-                        if (cg === 2) {
+                        // Run out of artworks at the broadest level (country)
+                        if (cg === REGION_TYPES.length - 1) {
                             if (!limitSize) {
                                 setIsEnd(true);
                                 break; 
@@ -171,26 +263,46 @@ export function useArtworks(
                                 setCurrGallary(0);
                                 rs.reset(ids[REGION_TYPES[0]]);
                             }
+                        } else {
+                            // Find artworks in next level of region
+                            const nextRegionType = REGION_TYPES[cg + 1];
+                            if (ids[nextRegionType]?.length > 0) {
+                                rs.reset(ids[nextRegionType]);
+                                setCurrGallary(prev => prev + 1);
+                                cg += 1;
+                                continue;
+                            } else {
+                                // Skip to next region if current one is empty
+                                cg += 1;
+                                if (cg >= REGION_TYPES.length) {
+                                    setIsEnd(true);
+                                    break;
+                                }
+                                continue;
+                            }
                         }
-                        // Find artworks in next level of region
-                        rs.reset(ids[REGION_TYPES[cg + 1]]);
-                        setCurrGallary(prev => prev + 1);
-                        cg += 1;
-                        continue;
                     }
+                    
                     // Get Artwork from id
                     for (let i = 0; i < selectedIds.length; i++) {
                         const currId = selectedIds[i];
                         if (!currId) continue;
-                        const artwork = await getArtworkById(currId);
-                        if (artwork?.error) {
-                            setError(artworks?.error + ': ' + artworks?.detail);
+                        
+                        try {
+                            const artwork = await getArtworkById(currId);
+                            if (artwork?.error) {
+                                setError(artwork?.error + ': ' + artwork?.detail);
+                                continue;
+                            }
+                            aws.push(artwork);
+                            artworksLeft -= 1;
+                        } catch (error) {
+                            console.error('Error fetching artwork:', error);
                             continue;
                         }
-                        aws.push(artwork);
-                        artworksLeft -= 1;
                     }
                 }
+                
                 if (limitSize) {
                     setArtworks(aws);
                 } else {

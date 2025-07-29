@@ -12,39 +12,60 @@ import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import ArtworkImage from "@/components/ArtworkImage/ArtworkImage";
 
 const MapPanel = ({place, isSmall=true}) => {
-    const map = useMap();
-    const placesLib = useMapsLibrary('places');
-    const { error, setError } = useContext(ErrorContext);
-
-    const [time, setTime] = useState([1900, 2000]);
+    const [time, setTime] = useState([1700, 2000]);
     const [details, setDetails] = useState(false);
     const [toQuery, setToQuery] = useState(false);
     const [isEnd, setIsEnd] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [savedScrollPosition, setSavedScrollPosition] = useState(0);
 
     const artworks = useArtworks(
-        map, placesLib, place, toQuery, setToQuery, 
-        setIsLoading, setIsEnd, setError, 
+        place, toQuery, setToQuery, 
+        setIsLoading, setIsEnd,
         {
             "PAGE_SIZE": 6,
             "limitSize": false, 
             "byDate": !isSmall,
             "from": time[0] ? time[0] : 1900,
             "to": time[1] ? time[1] : 2000,
+            "isSmall": isSmall
         }
     );
     const [selectedArtwork, setSelectedArtwork] = useState({});
 
-    const containerRef = useRef(null);
+    const headerRef = useRef(null);
+    const artworksContainerRef = useRef(null);
 
     useEffect(() => {
         setDetails(false);
+        setSavedScrollPosition(0); // Reset scroll position when place changes
     }, [place])
+
+    // Save scroll position when going to details view
+    const handleArtworkClick = (artwork) => {
+        if (artworksContainerRef.current) {
+            setSavedScrollPosition(artworksContainerRef.current.scrollTop);
+        }
+        setSelectedArtwork(artwork);
+        setDetails(true);
+    };
+
+    // Restore scroll position when coming back from details view
+    useEffect(() => {
+        if (!details && artworksContainerRef.current && savedScrollPosition > 0) {
+            // Use setTimeout to ensure DOM is updated before scrolling
+            setTimeout(() => {
+                if (artworksContainerRef.current) {
+                    artworksContainerRef.current.scrollTop = savedScrollPosition;
+                }
+            }, 0);
+        }
+    }, [details, savedScrollPosition]);
 
     // Scroll event listener for loading more content
     useEffect(() => {
         if (!place || Object.keys(place).length === 0) return;
-        const container = containerRef.current;
+        const container = artworksContainerRef.current;
         if (!container) return;
 
         const handleScroll = (e) => {
@@ -85,7 +106,7 @@ const MapPanel = ({place, isSmall=true}) => {
             (<ArtworkDisplay artwork={selectedArtwork} setDetails={setDetails}/>)
         : (
             <div className="border border-gray-200 w-[40vw] max-[1024px]:w-[50vw] max-[768px]:w-[100vw] h-screen scrollbar-light">
-                <div ref={containerRef} className={`p-4 overflow-y-auto overflow-x-hidden w-full ${isSmall ? 'h-[15vh]' : 'h-[20vh]'} flex flex-col justify-between`}>
+                <div ref={headerRef} className={`p-4 overflow-y-auto overflow-x-hidden w-full ${isSmall ? 'h-[15vh]' : 'h-[20vh]'} flex flex-col justify-between`}>
                     {!isSmall && (
                         <div className="space-y-4 w-full">
                             {/* Timeline Section */}
@@ -102,18 +123,15 @@ const MapPanel = ({place, isSmall=true}) => {
                     </div>
                     
                 </div>
-                <div ref={containerRef} className={`overflow-y-auto h-full ${isSmall ? 'max-h-[75vh]' : 'max-h-[70vh]'} flex flex-row flex-wrap gap-2`}>
+                <div ref={artworksContainerRef} className={`overflow-y-auto h-full ${isSmall ? 'max-h-[75vh]' : 'max-h-[70vh]'} flex flex-row flex-wrap gap-2`}>
                     {artworks?.length ? 
                         artworks.map((item, index) => {
                         
                             return (
                                 <div                          
-                                    className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden"                          
+                                    className="relative w-full min-[728px]:w-[calc(50%-0.25rem)] min-h-[26vh] aspect-square bg-gray-100 overflow-hidden cursor-pointer"                          
                                     key={item?.title + index}
-                                    onClick={() => {
-                                        setSelectedArtwork(item);
-                                        setDetails(true);
-                                    }}                     
+                                    onClick={() => handleArtworkClick(item)}                     
                                 >                         
                                     <ArtworkImage artwork={item} />
                                     <div className="absolute inset-0 bg-black/10"></div>
@@ -165,7 +183,7 @@ const MapPanel = ({place, isSmall=true}) => {
                 )}
                 {!isLoading && !isEnd && (
                     <div className="flex justify-center py-4">
-                        <div className="text-gray-500" onClick={() => {setToQuery(true)}}>Load More</div>
+                        <div className="text-gray-500 cursor-pointer" onClick={() => {setToQuery(true)}}>Load More</div>
                     </div>
                 )}
             </div>
