@@ -1,19 +1,26 @@
 // Places Services
-export const largeMapQuery = {
-    'type': 'locality',
-    'keyword': 'city',
+
+// zoom <= 7
+export const countriesQuery = {
+    'query': 'major cities',
+    'type': 'locality'
 }
-export const regionQuery = {
-    'type': 'administrative_area_level_2',
-}
-export const stateQuery = {
-    'type': 'country'
-}
+// zoom <= 13
+export const majorCitiesQuery = {
+    'query': 'major cities',
+    'type': 'locality'
+};
+// Larger zoom
 export const smallMapQuery = {
+    'query': 'popular tourist destinations landmarks monuments',
     'type': 'tourist_attraction',
-    'keyword': 'attraction',
-}
+};
 export const smallMapDetailsFields = ['place_id', 'name', 'formatted_address', 'photos', 'url', 'vicinity', 'website']
 export const smallMapDetailsQuery = {
     'fields': smallMapDetailsFields,
+}
+
+// 3D Map
+export const regionQuery = {
+    'type': 'administrative_area_level_2',
 }
