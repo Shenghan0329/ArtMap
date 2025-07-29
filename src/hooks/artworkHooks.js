@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import RandomSelector from "@/common/RandomSelector";
 import { useDebounced } from "./generalHooks";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { ErrorContext } from "@/app/page";
 
 import { getArtworkById, getArtworksByQuery, searchArtworksByTimeRange } from "@/api/api";
 
 const MAX_SIZE = 96;
-const REGION_TYPES = ['sublocality', 'administrative_area_level_2', 'administrative_area_level_1', 'country'];
 
 /*
 * @param {google.maps.Map} map - Google Map instance
@@ -18,21 +18,32 @@ const REGION_TYPES = ['sublocality', 'administrative_area_level_2', 'administrat
 * @param {boolean} setIsEnd - Setter for isEnd, to indicate whether there are more artworks to fetch
 * @param {function} setError - Setter for error
 */
+const baseRegions = {
+    administrative_area_level_2: '', 
+    administrative_area_level_1: '',
+    country: ''
+};
+
 export function useArtworks(
-    map, placesLib, place, 
+    place, 
     toQuery, setToQuery, 
-    setIsLoading, setIsEnd, setError, options = {
+    setIsLoading, setIsEnd, 
+    options = {
         "PAGE_SIZE": 6, 
         "limitSize": false, 
         "byDate": false,
-        "from": 1900,
+        "from": 1600,
         "to": 2000,
-        "isSmall": false
+        "isSmall": false,
+        "streetView": false
     }
 ) {
+    const map = useMap();
     const geocoder = useMapsLibrary('geocoding');
+    const placesLib = useMapsLibrary('places');
+    const {setError} = useContext(ErrorContext);
     const [artworks, setArtworks] = useState([]);
-    const { PAGE_SIZE, limitSize, byDate, from, to, isSmall } = options;
+    const { PAGE_SIZE, limitSize, byDate, from, to, isSmall, streetView } = options;
     const dFrom = useDebounced(from, 500);
     const dTo = useDebounced(to, 500);
 
@@ -42,18 +53,25 @@ export function useArtworks(
     const [ids, setIds] = useState({});
     const [idInit, setIdInit] = useState(false);
 
+    const REGION_TYPES = streetView ? 
+        ['neighborhood', 'sublocality', 'administrative_area_level_2', 'administrative_area_level_1', 'country'] 
+        : (isSmall ? ['sublocality', 'administrative_area_level_2', 'administrative_area_level_1', 'country']
+            : ['administrative_area_level_2', 'administrative_area_level_1', 'country']
+        );
+
     // Function to extract region names from geocoding results
     const extractRegionsFromGeocoding = (addressComponents) => {
-        const regions = isSmall ? {
-            sublocality: '',
-            administrative_area_level_2: '', 
-            administrative_area_level_1: '',
-            country: ''
-        } : {
-            administrative_area_level_2: '', 
-            administrative_area_level_1: '',
-            country: ''
-        };
+        const regions = streetView ? 
+            {
+                neighborhood: '',
+                sublocality: '',
+                ...baseRegions
+            } : (
+                isSmall ? {
+                    sublocality: '',
+                    ...baseRegions
+                } : baseRegions
+            );
 
         addressComponents.forEach(component => {
             // Check each address component type
@@ -136,7 +154,6 @@ export function useArtworks(
         // Query Regions using geocoding
         if (place && Object.keys(place).length) {
             geocodePlace(place).then(regions => {
-                console.log('Geocoded regions:', regions);
                 setCurrRegion(regions);
             }).catch(error => {
                 setError('GEOCODING_FAILED');
@@ -159,9 +176,23 @@ export function useArtworks(
                 
                 let artworks = [];
                 try {
-                    if (!byDate) {
-                        artworks = await getArtworksByQuery(`q=${encodeURIComponent(location)}&limit=${MAX_SIZE}`);
-                        console.log(encodeURIComponent(location));
+                    let fromYear = 0;
+                    let toYear = 3000;
+                    if (byDate) {
+                        fromYear = dFrom;
+                        toYear = dTo;
+                    } 
+                    if (currRegion?.country) {
+                        artworks = await searchArtworksByTimeRange(
+                            fromYear, toYear, 
+                            {
+                                "searchTerm": location,
+                                "limit": MAX_SIZE,
+                                "page": 1,
+                                "publicDomainOnly": true,
+                                "placeOfOrigin": currRegion.country
+                            }
+                        );
                     } else {
                         artworks = await searchArtworksByTimeRange(
                             dFrom, dTo, 
@@ -169,11 +200,10 @@ export function useArtworks(
                                 "searchTerm": location,
                                 "limit": MAX_SIZE,
                                 "page": 1,
-                                "publicDomainOnly": true
+                                "publicDomainOnly": true,
                             }
                         );
                     }
-                    
                     if (artworks?.error) {
                         setError(artworks?.error + ': ' + artworks?.detail);
                         newIds[regionType] = [];

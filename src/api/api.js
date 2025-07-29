@@ -69,11 +69,12 @@ async function searchArtworksByTimeRange(from, to, options = {}) {
         searchTerm = "*",
         limit = 10,
         page = 1,
-        publicDomainOnly = false
+        publicDomainOnly = false,
+        placeOfOrigin = null
     } = options;
-    
+
     const baseUrl = "https://api.artic.edu/api/v1/artworks/search";
-    
+
     // Build the query object that will be passed as params
     const queryObj = {
         q: searchTerm,
@@ -94,7 +95,7 @@ async function searchArtworksByTimeRange(from, to, options = {}) {
         limit: limit,
         page: page
     };
-    
+
     // Add public domain filter if requested
     if (publicDomainOnly) {
         queryObj.query.bool.must.push({
@@ -103,14 +104,23 @@ async function searchArtworksByTimeRange(from, to, options = {}) {
             }
         });
     }
-    
+
+    // Add place of origin filter if specified
+    if (placeOfOrigin) {
+        queryObj.query.bool.must.push({
+            match: {
+                place_of_origin: placeOfOrigin
+            }
+        });
+    }
+
     // The API expects the entire query as a JSON string in the 'params' parameter
     const params = new URLSearchParams({
         params: JSON.stringify(queryObj)
     });
-    
+
     const url = `${baseUrl}?${params.toString()}`;
-    
+
     try {
         const response = await fetch(url);
         const res = await response.json();

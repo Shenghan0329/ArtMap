@@ -54,14 +54,15 @@ const TwoDimensionalMap = () => {
     const [isLoading, setIsLoading] = useState(false);;
 
     const artworks = useArtworks(
-        map, placesLib, panelObject, toQuery, setToQuery, 
-        setIsLoading, setIsEnd, setError, 
+        panelObject, toQuery, setToQuery, 
+        setIsLoading, setIsEnd, 
         {
             "PAGE_SIZE": THREED_IMAGE_NUMBER, 
             "limitSize": true, 
             "size": THREED_IMAGE_NUMBER,
             "byDate": false,
-            "isSmall": true
+            "isSmall": true,
+            "streetView": true
         }
     );
     const {getKey, clearKeys} = useKey();
@@ -196,7 +197,7 @@ const TwoDimensionalMap = () => {
             if (!loadingEnabled) {
                 setLoadingEnabled(true);
             }
-            if (zoom > 13) {
+            if (zoom > 11) {
                 setIsSmall(prev => true);
                 setQueryText(smallMapQuery);
             } else {
@@ -211,6 +212,15 @@ const TwoDimensionalMap = () => {
         map.addListener('center_changed', () => {
             setVisible(false);
             setLoadingEnabled(true);
+        });
+        map.addListener('click', (event) => {
+            const zoom = map.getZoom();
+            if (zoom < 12) {
+                // Set the clicked location as the new center
+                map.setCenter(event.latLng);
+                // Then zoom in
+                map.setZoom(zoom + 3);
+            }
         });
 
         // Set StreetView Listeners
@@ -264,6 +274,20 @@ const TwoDimensionalMap = () => {
                         text={is2D ? "Street View" : "2D Map"}
                         onClick={async () => {
                             setIs2D(prev => !prev);
+                            setVisible(false);
+                        }}
+                    />
+                )
+            }
+            {
+                !isSmall && (panelObject && Object.keys(panelObject).length > 0) && (
+                    <SwitchButton 
+                        place={panelObject}
+                        text={"Zoom In"}
+                        onClick={async () => {
+                            if (!map) return;
+                            map.setCenter(panelObject.geometry?.location);
+                            map.setZoom(map.getZoom()+3);
                             setVisible(false);
                         }}
                     />

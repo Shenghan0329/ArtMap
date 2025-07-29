@@ -3,7 +3,7 @@
 // zoom <= 7
 export const countriesQuery = {
     'query': 'major cities',
-    'type': 'locality'
+    'type': 'political'
 }
 // zoom <= 13
 export const majorCitiesQuery = {

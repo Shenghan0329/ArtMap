@@ -12,10 +12,6 @@ import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import ArtworkImage from "@/components/ArtworkImage/ArtworkImage";
 
 const MapPanel = ({place, isSmall=true}) => {
-    const map = useMap();
-    const placesLib = useMapsLibrary('places');
-    const { error, setError } = useContext(ErrorContext);
-
     const [time, setTime] = useState([1700, 2000]);
     const [details, setDetails] = useState(false);
     const [toQuery, setToQuery] = useState(false);
@@ -23,8 +19,8 @@ const MapPanel = ({place, isSmall=true}) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const artworks = useArtworks(
-        map, placesLib, place, toQuery, setToQuery, 
-        setIsLoading, setIsEnd, setError, 
+        place, toQuery, setToQuery, 
+        setIsLoading, setIsEnd,
         {
             "PAGE_SIZE": 6,
             "limitSize": false, 
