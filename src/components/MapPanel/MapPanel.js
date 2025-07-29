@@ -84,7 +84,7 @@ const MapPanel = ({place, isSmall=true}) => {
         {details ? 
             (<ArtworkDisplay artwork={selectedArtwork} setDetails={setDetails}/>)
         : (
-            <div className="border border-gray-200 w-[40vw] max-[1024px]:w-[50vw] max-[768px]:w-[100vw] h-screen">
+            <div className="border border-gray-200 w-[40vw] max-[1024px]:w-[50vw] max-[768px]:w-[100vw] h-screen scrollbar-light">
                 <div ref={containerRef} className={`p-4 overflow-y-auto overflow-x-hidden w-full ${isSmall ? 'h-[15vh]' : 'h-[20vh]'} flex flex-col justify-between`}>
                     {!isSmall && (
                         <div className="space-y-4 w-full">
@@ -95,7 +95,7 @@ const MapPanel = ({place, isSmall=true}) => {
                                                 
                     {/* Year Display */}
                     <div className="text-md font-medium text-gray-700 flex flex-row justify-between">
-                        <h1 className="w-1/2 text-lg mt-2 font-bold text-gray-900 leading-tight">
+                        <h1 className="w-1/2 text-lg mt-2 font-bold text-gray-900 overflow-scroll max-h-6 leading-tight">
                             {place.name}
                         </h1>
                         {!isSmall &&<p className="w-1/2 text-gray-600 mt-2">Year: <span className="font-bold">{time[0] + ' - ' + time[1]}</span></p>}

@@ -122,10 +122,13 @@ export function GlobalErrorBoundary({ children }) {
         
         if (!response.ok) {
           let errorMessage = `Request failed with status ${response.status}`;
-          
+          if (url?.includes('https://www.artic.edu/iiif/2')) {
+            // A common Error caused by Image api cache, pretend nothing happens
+            console.log("Hide a trivial error.");
+            return response; // Return the response instead of undefined
+          }
           if (response.status === 429) {
             // If we've exhausted retries and still getting 429
-            console.log('aaa');
             const retryAfter = response.headers.get('Retry-After');
             errorMessage = retryAfter ? 
               `Too many requests. Please try again in ${retryAfter} seconds.` :
@@ -133,13 +136,7 @@ export function GlobalErrorBoundary({ children }) {
           } else if (response.status >= 500) {
             errorMessage = 'External server error. Please try again later.';
           } else if (response.status >= 400) {
-            if (url?.includes('/iiif/2')) {
-              // A common Error caused by Image api cache, pretend nothing happens
-              console.log("Hide a trivial error.");
-              return response; // Return the response instead of undefined
-            } else {
-              errorMessage = 'Request failed, please try again later';
-            }
+            errorMessage = 'Request failed, please try again later';
           }
           
           setError(errorMessage);

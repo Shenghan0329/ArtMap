@@ -12,12 +12,13 @@ import LeftPanel from "@/components/LeftPanel/LeftPanel";
 import GoogleMapSelector from "@/components/2DMap/2DMap";
 import { PictureFrame3D } from "@/components/3D/PictureFrame3D";
 
-import { largeMapQuery, smallMapQuery } from "@/constants/google_map_queries";
+import { countriesQuery, majorCitiesQuery, smallMapQuery } from "@/constants/google_map_queries";
 import MAP_OPTIONS from "@/constants/mapOptions";
 import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import MapPanel from "../../components/MapPanel/MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import { THREED_IMAGE_NUMBER } from "@/constants/constants";
+import useKey from "@/hooks/generalHooks";
 
 const STREETVIEW_MIN_ZOOM = 0.8140927000158323
 const STREETVIEW_MAX_ZOOM = 3
@@ -62,6 +63,7 @@ const TwoDimensionalMap = () => {
             "byDate": false,
         }
     );
+    const {getKey, clearKeys} = useKey();
     
     const handleZoomIn = () => {
         if (map) {
@@ -94,7 +96,7 @@ const TwoDimensionalMap = () => {
         if (pagination.hasNextPage) {
             pagination.nextPage();
         } else {
-            setCanPin(true);
+            setTimeout(() => setCanPin(true), 200);
         }
     }
 
@@ -110,8 +112,9 @@ const TwoDimensionalMap = () => {
         setCanPin(false)
         setToPin([]);
         let maxResults = MAP_OPTIONS.MAX_LABELS;
-        console.log("Searching for places");
-        svc.nearbySearch({
+        console.log("Searching for places", queryText);
+        const search = !queryText.query ? "nearbySearch" : "textSearch";
+        svc[search]({
             'bounds': bounds,
             ...queryText
         }, (res, status, pagination) => {
@@ -129,19 +132,6 @@ const TwoDimensionalMap = () => {
     const markers = useMemo(() => {
         if (!pinned) return [];
         const Keys = {}
-        const getKey = (address, index) => {
-            let key = address?.replace(/[^0-9A-Za-z]/, '-')
-            if (!address) {
-                key = index;
-            }
-            if (Keys[key]) {
-                key = key + '-' + Keys[key];
-                Keys[address] += 1;
-            } else {
-                Keys[key] = 2;
-            }
-            return key;
-        }
         return (
             pinned.map((place, index) => {
                 return(
@@ -172,15 +162,11 @@ const TwoDimensionalMap = () => {
     useEffect(() => {
         setPanelObject({});
         setVisible(false);
-        if (isSmall) {
-            setQueryText(smallMapQuery);
-        } else {
-            setQueryText(largeMapQuery);
-        }
     }, [isSmall]);
 
     useEffect(() => {
         if (canPin){
+            clearKeys();
             setPinned(toPin);
         }
     }, [canPin]);
@@ -211,7 +197,13 @@ const TwoDimensionalMap = () => {
             }
             if (zoom > 13) {
                 setIsSmall(prev => true);
+                setQueryText(smallMapQuery);
             } else {
+                if (zoom >= 8) {
+                    setQueryText(majorCitiesQuery);
+                } else {
+                    setQueryText(countriesQuery);
+                }
                 setIsSmall(prev =>false);
             }
         });
