@@ -61,6 +61,7 @@ const TwoDimensionalMap = () => {
             "limitSize": true, 
             "size": THREED_IMAGE_NUMBER,
             "byDate": false,
+            "isSmall": true
         }
     );
     const {getKey, clearKeys} = useKey();

@@ -16,7 +16,7 @@ const MapPanel = ({place, isSmall=true}) => {
     const placesLib = useMapsLibrary('places');
     const { error, setError } = useContext(ErrorContext);
 
-    const [time, setTime] = useState([1900, 2000]);
+    const [time, setTime] = useState([1700, 2000]);
     const [details, setDetails] = useState(false);
     const [toQuery, setToQuery] = useState(false);
     const [isEnd, setIsEnd] = useState(false);
@@ -31,6 +31,7 @@ const MapPanel = ({place, isSmall=true}) => {
             "byDate": !isSmall,
             "from": time[0] ? time[0] : 1900,
             "to": time[1] ? time[1] : 2000,
+            "isSmall": isSmall
         }
     );
     const [selectedArtwork, setSelectedArtwork] = useState({});
