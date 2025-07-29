@@ -132,7 +132,7 @@ const TwoDimensionalMap = () => {
     }
 
     const markers = useMemo(() => {
-        if (!pinned) return [];
+        if (!pinned || !pinned.length) return [];
         const Keys = {}
         return (
             pinned.map((place, index) => {
@@ -163,6 +163,7 @@ const TwoDimensionalMap = () => {
 
     useEffect(() => {
         setPanelObject({});
+        setPinned([]);
         setVisible(false);
     }, [isSmall]);
 
@@ -197,7 +198,7 @@ const TwoDimensionalMap = () => {
             if (!loadingEnabled) {
                 setLoadingEnabled(true);
             }
-            if (zoom > 11) {
+            if (zoom > 12) {
                 setIsSmall(prev => true);
                 setQueryText(smallMapQuery);
             } else {
@@ -215,7 +216,7 @@ const TwoDimensionalMap = () => {
         });
         map.addListener('click', (event) => {
             const zoom = map.getZoom();
-            if (zoom < 12) {
+            if (zoom <= 12) {
                 // Set the clicked location as the new center
                 map.setCenter(event.latLng);
                 // Then zoom in
