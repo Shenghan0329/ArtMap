@@ -315,7 +315,7 @@ const TwoDimensionalMap = () => {
                         onClick={getMarkers}
                         disabled={!loadingEnabled}
                     >
-                        searching attractions in this area......
+                        searching notable places in this area......
                     </button>
                 </div>)
             }
