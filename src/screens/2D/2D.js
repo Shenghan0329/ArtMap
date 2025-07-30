@@ -45,7 +45,6 @@ const TwoDimensionalMap = () => {
 
     const [canPin, setCanPin] = useState(false);
     const [toPin, setToPin] = useState([]);
-    const [pinned, setPinned] = useState([]);
     const [panelObject, setPanelObject] = useState({});
     const [artwork, setArtwork] = useState({});
 
@@ -132,10 +131,12 @@ const TwoDimensionalMap = () => {
     }
 
     const markers = useMemo(() => {
-        if (!pinned || !pinned.length) return [];
-        const Keys = {}
+        if (!toPin || !toPin.length) return [];
+        const removedDuplicateToPin = toPin.filter((obj1, i, arr) => 
+            arr.findIndex(obj2 => (obj2.formatted_address === obj1.formatted_address)) === i
+        )
         return (
-            pinned.map((place, index) => {
+            [...removedDuplicateToPin].map((place, index) => {
                 return(
                 <AdvancedMarker 
                     className = "pointer-events-auto"
@@ -159,18 +160,16 @@ const TwoDimensionalMap = () => {
                 )
             }) 
         )
-    }, [pinned, selectedMarker]);
+    }, [toPin, selectedMarker]);
 
     useEffect(() => {
         setPanelObject({});
-        setPinned([]);
         setVisible(false);
     }, [isSmall]);
 
     useEffect(() => {
         if (canPin){
             clearKeys();
-            setPinned(toPin);
         }
     }, [canPin]);
 
@@ -221,6 +220,10 @@ const TwoDimensionalMap = () => {
                 map.setCenter(event.latLng);
                 // Then zoom in
                 map.setZoom(zoom + 3);
+            } else {
+                setSelectedMarker(-1);
+                setVisible(false);
+                setPanelObject({});
             }
         });
 
@@ -289,6 +292,20 @@ const TwoDimensionalMap = () => {
                             if (!map) return;
                             map.setCenter(panelObject.geometry?.location);
                             map.setZoom(map.getZoom()+3);
+                            setVisible(false);
+                        }}
+                    />
+                )
+            }
+            {
+                !(panelObject && Object.keys(panelObject).length > 0) && (
+                    <SwitchButton 
+                        place={{}}
+                        text={"Zoom Out"}
+                        onClick={async () => {
+                            if (!map) return;
+                            if (!isSmall) map.setZoom(map.getZoom()-3);
+                            else map.setZoom(12);
                             setVisible(false);
                         }}
                     />
