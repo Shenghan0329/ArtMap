@@ -28,14 +28,15 @@ const useKey = () => {
 
     key = String(key);
     
-    if (keysRef.current[key]) {
-      const newKey = key + '-' + keysRef.current[key];
-      keysRef.current[key] += 1;
-      return newKey;
-    } else {
-      keysRef.current[key] = 2;
-      return key;
-    }
+    // if (keysRef.current[key]) {
+    //   const newKey = key + '-' + keysRef.current[key];
+    //   keysRef.current[key] += 1;
+    //   return newKey;
+    // } else {
+    //   keysRef.current[key] = 2;
+    //   return key;
+    // }
+    return key;
   }, []);
   
   const clearKeys = useCallback(() => {

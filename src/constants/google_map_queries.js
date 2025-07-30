@@ -12,7 +12,7 @@ export const majorCitiesQuery = {
 };
 // Larger zoom
 export const smallMapQuery = {
-    'query': 'popular tourist destinations landmarks monuments',
+    'query': 'popular tourist destinations landmarks',
     'type': 'tourist_attraction',
 };
 export const smallMapDetailsFields = ['place_id', 'name', 'formatted_address', 'photos', 'url', 'vicinity', 'website']
