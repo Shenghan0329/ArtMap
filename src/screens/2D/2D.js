@@ -221,6 +221,10 @@ const TwoDimensionalMap = () => {
                 map.setCenter(event.latLng);
                 // Then zoom in
                 map.setZoom(zoom + 3);
+            } else {
+                setSelectedMarker(-1);
+                setVisible(false);
+                setPanelObject({});
             }
         });
 
@@ -289,6 +293,20 @@ const TwoDimensionalMap = () => {
                             if (!map) return;
                             map.setCenter(panelObject.geometry?.location);
                             map.setZoom(map.getZoom()+3);
+                            setVisible(false);
+                        }}
+                    />
+                )
+            }
+            {
+                !(panelObject && Object.keys(panelObject).length > 0) && (
+                    <SwitchButton 
+                        place={{}}
+                        text={"Zoom Out"}
+                        onClick={async () => {
+                            if (!map) return;
+                            if (!isSmall) map.setZoom(map.getZoom()-3);
+                            else map.setZoom(12);
                             setVisible(false);
                         }}
                     />
