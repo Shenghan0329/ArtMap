@@ -283,34 +283,6 @@ const TwoDimensionalMap = () => {
                     />
                 )
             }
-            {
-                !isSmall && (panelObject && Object.keys(panelObject).length > 0) && (
-                    <SwitchButton 
-                        place={panelObject}
-                        text={"Zoom In"}
-                        onClick={async () => {
-                            if (!map) return;
-                            map.setCenter(panelObject.geometry?.location);
-                            map.setZoom(map.getZoom()+3);
-                            setVisible(false);
-                        }}
-                    />
-                )
-            }
-            {
-                !(panelObject && Object.keys(panelObject).length > 0) && (
-                    <SwitchButton 
-                        place={{}}
-                        text={"Zoom Out"}
-                        onClick={async () => {
-                            if (!map) return;
-                            if (!isSmall) map.setZoom(map.getZoom()-3);
-                            else map.setZoom(12);
-                            setVisible(false);
-                        }}
-                    />
-                )
-            }
             {loadingEnabled && is2D &&
                 (<div 
                     className="fixed top-8 right-8 z-50 px-2 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white text-md rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 border border-white/20" 
