@@ -18,10 +18,8 @@ import STREETVIEW_OPTIONS from "@/constants/streetViewOptions";
 import MapPanel from "../../components/MapPanel/MapPanel";
 import ArtworkDisplay from "@/components/ArtworkDisplay/ArtworkDisplay";
 import { THREED_IMAGE_NUMBER } from "@/constants/constants";
-import useKey from "@/hooks/generalHooks";
-
-const STREETVIEW_MIN_ZOOM = 0.8140927000158323
-const STREETVIEW_MAX_ZOOM = 3
+import useKey, { useWindowWidth } from "@/hooks/generalHooks";
+import { STREETVIEW_MAX_ZOOM, getStreetViewMinZoom } from "@/constants/constants";
 
 const defaultPov = {heading: 0, pitch: 0};
 
@@ -31,6 +29,8 @@ const TwoDimensionalMap = () => {
     
     const placesLib = useMapsLibrary('places');
 
+    const windowWidth = useWindowWidth();
+    const STREETVIEW_MIN_ZOOM = getStreetViewMinZoom(windowWidth);
     const locationInit = useLocationInit(map, placesLib);
     const [loadingEnabled, setLoadingEnabled] = useState(false);
 
