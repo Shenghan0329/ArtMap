@@ -8,15 +8,17 @@ import getUuid from 'uuid-by-string'
 import { useMap } from '@vis.gl/react-google-maps'
 import { generateCameraFOVTransforms } from '@/common/getRandomPositions'
 import { THREED_IMAGE_SHIFT, THREED_IMAGE_SIZE } from '@/constants/constants'
+import { STREETVIEW_MAX_ZOOM, getStreetViewMinZoom } from '@/constants/constants'
+import { useWindowWidth } from '@/hooks/generalHooks'
 
 const GOLDENRATIO = 1.61803398875
 
-const STREETVIEW_MIN_ZOOM = 0.8140927000158323
-const STREETVIEW_MAX_ZOOM = 3
 const IMAGE_NUMBER = 6;
 
 export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = THREED_IMAGE_SIZE, frameHeight = GOLDENRATIO * THREED_IMAGE_SIZE, backgroundColor = 'transparent', showFog = false}) => {
   const map = useMap()
+  const windowWidth = useWindowWidth();
+  const STREETVIEW_MIN_ZOOM = getStreetViewMinZoom(windowWidth);
   const cameraDataRef = useRef(null)
   const [initialCameraConfig, setInitialCameraConfig] = useState({
     fov: 90,
@@ -158,6 +160,8 @@ export const PictureFrame3D = ({ artworks, setArtwork, setVisible, frameWidth = 
 // Component to handle camera updates within the Canvas
 function CameraController({ map }) {
   const { camera } = useThree()
+  const windowWidth = useWindowWidth();
+  const STREETVIEW_MIN_ZOOM = getStreetViewMinZoom(windowWidth);
   const lastPovRef = useRef(null)
   
   useFrame(() => {

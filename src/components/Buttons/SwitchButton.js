@@ -6,7 +6,7 @@ const SwitchButton = ({onClick, place, text }) => {
     <button
         onClick={onClick}
         className="
-            w-22 h-22 z-5 bg-white border border-gray-300 rounded-lg shadow-sm hover:border-blue-500 
+            w-22 h-22 z-60 bg-white border border-gray-300 rounded-lg shadow-sm hover:border-blue-500 
             flex flex-col items-center justify-center overflow-hidden
             fixed bottom-4 right-16 
         "

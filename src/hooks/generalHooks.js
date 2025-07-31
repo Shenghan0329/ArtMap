@@ -16,6 +16,33 @@ export function useDebounced(value = 200, delay) {
     return debouncedValue;
 }
 
+export function useWindowWidth(delay = 100) {
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1200
+  );
+
+  useEffect(() => {
+    let timeoutId;
+    
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.log('Detected Window Width: ', window.innerWidth);
+        setWindowWidth(window.innerWidth);
+      }, delay);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, [delay]);
+
+  return windowWidth;
+}
+
 const useKey = () => {
   const keysRef = useRef({});
   
