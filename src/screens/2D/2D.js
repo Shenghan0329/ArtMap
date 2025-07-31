@@ -68,7 +68,7 @@ const TwoDimensionalMap = () => {
     
     const handleZoomIn = () => {
         if (map) {
-            if (is2D) map.setZoom(map.getZoom() + 1);
+            if (is2D) map.setZoom(map.getZoom() + 2);
             else {
                 const streetView = map.getStreetView();
                 const updatedZoom = Math.min(streetView.getZoom() + 0.2, STREETVIEW_MAX_ZOOM);
@@ -80,7 +80,7 @@ const TwoDimensionalMap = () => {
 
     const handleZoomOut = () => {
         if (map) {
-            if (is2D) map.setZoom(map.getZoom() - 1);
+            if (is2D) map.setZoom(map.getZoom() - 2);
             else {
                 const streetView = map.getStreetView();
                 const updatedZoom = Math.max(streetView.getZoom() - 0.2, STREETVIEW_MIN_ZOOM);
