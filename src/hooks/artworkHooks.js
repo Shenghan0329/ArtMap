@@ -105,17 +105,20 @@ export function useArtworks(
             // If we have coordinates, use them for reverse geocoding
             if (place.geometry && place.geometry.location) {
                 request = {
+                    language: 'en',
                     location: place.geometry.location
                 };
             }
             // Otherwise, use the place name/formatted address
             else if (place.formatted_address) {
                 request = {
+                    language: 'en',
                     address: place.formatted_address
                 };
             }
             else if (place.name) {
                 request = {
+                    language: 'en',
                     address: place.name
                 };
             }
