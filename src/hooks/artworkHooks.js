@@ -252,13 +252,12 @@ export function useArtworks(
                 let artworksLeft = PAGE_SIZE;
                 const aws = [];
                 let cg = currGallary;
-                
                 while (artworksLeft > 0) {
                     const selectedIds = rs.select(1);
                     // Current selector is empty
                     if (selectedIds.length === 0) {
                         // Run out of artworks at the broadest level (country)
-                        if (cg === REGION_TYPES.length - 1) {
+                        if (cg === REGION_TYPES.length - 2) {
                             if (!limitSize) {
                                 setIsEnd(true);
                                 break; 
@@ -285,7 +284,6 @@ export function useArtworks(
                             }
                         }
                     }
-                    
                     // Get Artwork from id
                     for (let i = 0; i < selectedIds.length; i++) {
                         const currId = selectedIds[i];
