@@ -1,5 +1,5 @@
 const MAP_OPTIONS = {
-    defaultCenter: { lat: -33.860664, lng: 151.208138 },
+    defaultCenter: { lat: 40.7831, lng: -73.9712 }, // New York City
     defaultZoom: 14,
     MAX_LABELS: 40,
     disableDefaultUI: true,

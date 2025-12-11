@@ -143,9 +143,7 @@ const TwoDimensionalMap = () => {
                     position={place.geometry.location} 
                     key={getKey(place.formatted_address, index)}
                     onClick={() => {
-                        if (!map) return;
-                        const streetView = map.getStreetView();
-                        streetView.setPosition(place.geometry.location);
+                        // 只设置panel和marker，不setPosition
                         setPanelObject(place);
                         setSelectedMarker(index);
                         setVisible(true);
@@ -177,17 +175,26 @@ const TwoDimensionalMap = () => {
         getMarkers();
     }, [queryText, locationInit]);
 
+    // Load streetview only when 3D
     useEffect(() => {
         if (!map) return; 
         const streetView = map.getStreetView();
+        
         if (!is2D && isSmall) {
-            streetView.setVisible(true);  
-            setLoadingEnabled(false);     
+            // add delay to prevent flickering
+            const timeout = setTimeout(() => {
+                if (panelObject?.geometry?.location) {
+                    streetView.setPosition(panelObject.geometry.location);
+                }
+                streetView.setVisible(true);
+            }, 200);
+            setLoadingEnabled(false);
+            
+            return () => clearTimeout(timeout);
         } else {
             streetView.setVisible(false);
         }
-    }, [is2D]);
-
+    }, [is2D, panelObject]);
 
     useEffect(() => {
         if (!map) return;
@@ -237,7 +244,7 @@ const TwoDimensionalMap = () => {
                 setError("3D_VIEW_NOT_AVAILABLE");
                 setIs2D(true);
             }
-        })
+        });
         streetView.addListener("pov_changed", () => {
             if(streetView.getVisible()) setVisible(false);
             const pov = streetView.getPov();
